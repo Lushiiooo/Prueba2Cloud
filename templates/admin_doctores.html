@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Doctores - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-medical-dark mb-2">
+                    <i class="fas fa-user-md text-medical-blue mr-3"></i>Gestionar Doctores
+                </h1>
+                <p class="text-gray-600">Total: <span class="font-bold text-medical-blue">{{ total }} doctores</span></p>
+            </div>
+            <div class="space-x-2">
+                <a href="{% url 'admin_dashboard' %}" class="btn-primary text-white px-6 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver al Panel
+                </a>
+                <a href="{% url 'index' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition">
+                    <i class="fas fa-home mr-2"></i>Inicio
+                </a>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'doctor_create' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition inline-block">
+                <i class="fas fa-plus mr-2"></i>Crear Nuevo Doctor
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de Doctores -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-medical-light-blue border-b-2 border-medical-blue">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-dark">Nombre</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-dark">Especialidad</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-dark">Cédula</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-dark">Experiencia</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-dark">Estado</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-dark">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doctor in doctores %}
+                    <tr class="border-b hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <i class="fas fa-user-circle text-medical-blue mr-2"></i>{{ doctor.nombre }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            <span class="px-3 py-1 bg-medical-light-blue text-medical-blue rounded-full text-xs font-medium">
+                                {{ doctor.get_especialidad_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ doctor.numero_cedula }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ doctor.experiencia_anos }} años</td>
+                        <td class="px-6 py-4 text-sm">
+                            {% if doctor.disponible %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                                <i class="fas fa-check-circle mr-1"></i>Disponible
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                                <i class="fas fa-times-circle mr-1"></i>No disponible
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm space-x-2">
+                            <a href="{% url 'admin_doctor_toggle' doctor.id %}" 
+                               class="{% if doctor.disponible %}bg-red-500 hover:bg-red-600{% else %}bg-green-500 hover:green-600{% endif %} text-white px-2 py-1 rounded text-xs transition inline-block">
+                                {% if doctor.disponible %}
+                                    <i class="fas fa-ban mr-1"></i>Desactivar
+                                {% else %}
+                                    <i class="fas fa-check mr-1"></i>Activar
+                                {% endif %}
+                            </a>
+                            <a href="{% url 'doctor_update' doctor.id %}" 
+                               class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-edit mr-1"></i>Editar
+                            </a>
+                            <a href="{% url 'doctor_delete' doctor.id %}" 
+                               class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-trash mr-1"></i>Eliminar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-600">
+                            <i class="fas fa-inbox text-3xl text-gray-400 mb-2"></i>
+                            <p class="mt-2">No hay doctores registrados</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

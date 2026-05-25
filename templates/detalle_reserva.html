@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalles de Reserva - Medical Reserva{% endblock %}
+
+{% block content %}
+<section class="py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumb -->
+        <div class="mb-8 flex items-center space-x-2 text-gray-600">
+            <a href="{% url 'dashboard_paciente' %}" class="hover:text-medical-blue transition">Mis Reservas</a>
+            <i class="fas fa-chevron-right text-sm"></i>
+            <span class="text-gray-900">Reserva #{{ reserva.id }}</span>
+        </div>
+        
+        <!-- Main Card -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="gradient-header text-white p-8">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p class="text-sm uppercase tracking-wide text-white text-opacity-75">Reserva #{{ reserva.id }}</p>
+                        <h1 class="text-4xl font-bold">Dr. {{ reserva.doctor.nombre }}</h1>
+                    </div>
+                    <span class="px-4 py-2 rounded-full text-sm font-semibold {% if reserva.estado == 'confirmada' %}bg-green-500{% elif reserva.estado == 'pendiente' %}bg-yellow-500{% elif reserva.estado == 'completada' %}bg-blue-500{% elif reserva.estado == 'cancelada' %}bg-red-500{% endif %} text-white">
+                        {{ reserva.get_estado_display }}
+                    </span>
+                </div>
+                <p class="text-white text-opacity-90">{{ reserva.doctor.get_especialidad_display }}</p>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <!-- Información de la Reserva -->
+                    <div>
+                        <h2 class="text-xl font-bold text-medical-dark mb-6 flex items-center space-x-2">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Información de la Reserva</span>
+                        </h2>
+                        
+                        <div class="space-y-6">
+                            <!-- Fecha y Hora -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Fecha y Hora</p>
+                                <p class="text-2xl font-bold text-medical-dark">
+                                    {{ reserva.fecha_hora|date:"d \d\e F \d\e Y" }}
+                                </p>
+                                <p class="text-lg text-medical-teal font-semibold mt-1">
+                                    <i class="fas fa-clock mr-2"></i>{{ reserva.fecha_hora|time:"H:i" }}
+                                </p>
+                            </div>
+                            
+                            <!-- Razón de Consulta -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Razón de la Consulta</p>
+                                <p class="text-gray-900 text-lg">{{ reserva.razon_consulta }}</p>
+                            </div>
+                            
+                            <!-- Notas -->
+                            {% if reserva.notas %}
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Notas Adicionales</p>
+                                <p class="text-gray-900 bg-gray-50 p-4 rounded-lg">{{ reserva.notas }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Información del Doctor -->
+                    <div>
+                        <h2 class="text-xl font-bold text-medical-dark mb-6 flex items-center space-x-2">
+                            <i class="fas fa-user-md"></i>
+                            <span>Información del Doctor</span>
+                        </h2>
+                        
+                        <div class="space-y-6 bg-medical-light-blue p-6 rounded-xl">
+                            <!-- Nombre -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Doctor</p>
+                                <p class="text-xl font-bold text-medical-dark">Dr. {{ reserva.doctor.nombre }}</p>
+                            </div>
+                            
+                            <!-- Especialidad -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Especialidad</p>
+                                <p class="text-gray-900 font-medium">{{ reserva.doctor.get_especialidad_display }}</p>
+                            </div>
+                            
+                            <!-- Email -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Email</p>
+                                <a href="mailto:{{ reserva.doctor.email }}" class="text-medical-blue font-semibold hover:text-medical-dark transition">
+                                    {{ reserva.doctor.email }}
+                                </a>
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            {% if reserva.doctor.telefono %}
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Teléfono</p>
+                                <a href="tel:{{ reserva.doctor.telefono }}" class="text-medical-blue font-semibold hover:text-medical-dark transition">
+                                    {{ reserva.doctor.telefono }}
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Cédula Profesional -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Cédula Profesional</p>
+                                <p class="text-gray-900 font-medium">{{ reserva.doctor.numero_cedula }}</p>
+                            </div>
+                            
+                            <!-- Experiencia -->
+                            <div>
+                                <p class="text-xs uppercase tracking-wide text-gray-600 font-semibold mb-2">Años de Experiencia</p>
+                                <p class="text-gray-900 font-medium">{{ reserva.doctor.experiencia_anos }} años</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Información de Auditoría -->
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase mb-4">Información de Registro</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div>
+                            <p class="text-xs uppercase font-semibold text-gray-500 mb-1">Creada el</p>
+                            <p class="font-medium">{{ reserva.creada_en|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase font-semibold text-gray-500 mb-1">Actualizada el</p>
+                            <p class="font-medium">{{ reserva.actualizada_en|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Acciones -->
+                <div class="mt-8 pt-6 border-t border-gray-200 flex gap-4">
+                    <a href="{% url 'dashboard_paciente' %}" class="flex-1 text-center px-6 py-3 border-2 border-medical-blue text-medical-blue font-semibold rounded-lg hover:bg-medical-light-blue transition">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver
+                    </a>
+                    
+                    {% if reserva.es_proxima and reserva.estado != 'cancelada' %}
+                    <a href="{% url 'cancelar_reserva' reserva.id %}" class="flex-1 text-center px-6 py-3 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition">
+                        <i class="fas fa-times mr-2"></i>Cancelar Reserva
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

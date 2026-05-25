@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold text-medical-blue mb-6">{{ title }}</h1>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <p class="text-red-700 font-semibold">Errores encontrados:</p>
+                    {% for error in form.non_field_errors %}
+                        <p class="text-red-600">• {{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Nombre -->
+            <div>
+                <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.nombre.label }}
+                </label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.nombre.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Especialidad -->
+            <div>
+                <label for="{{ form.especialidad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.especialidad.label }}
+                </label>
+                {{ form.especialidad }}
+                {% if form.especialidad.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.especialidad.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Número de Cédula -->
+            <div>
+                <label for="{{ form.numero_cedula.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.numero_cedula.label }}
+                </label>
+                {{ form.numero_cedula }}
+                {% if form.numero_cedula.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.numero_cedula.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Teléfono -->
+            <div>
+                <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.telefono.label }}
+                </label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.telefono.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Email -->
+            <div>
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.email.label }}
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.email.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Disponible -->
+            <div>
+                <label class="flex items-center">
+                    {{ form.disponible }}
+                    <span class="ml-2 text-sm font-medium text-gray-700">{{ form.disponible.label }}</span>
+                </label>
+                {% if form.disponible.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.disponible.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Años de Experiencia -->
+            <div>
+                <label for="{{ form.experiencia_anos.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.experiencia_anos.label }}
+                </label>
+                {{ form.experiencia_anos }}
+                {% if form.experiencia_anos.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.experiencia_anos.errors }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Botones -->
+            <div class="flex gap-4 pt-6">
+                <button type="submit" class="btn-primary text-white px-6 py-2 rounded-lg font-medium transition">
+                    <i class="fas fa-save mr-2"></i>{{ action }}
+                </button>
+                <a href="{% url 'admin_doctores' %}" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

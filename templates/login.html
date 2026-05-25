@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión - Medical Reserva{% endblock %}
+
+{% block content %}
+<section class="min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="w-full max-w-md">
+        <!-- Card Login -->
+        <div class="bg-white rounded-2xl shadow-lg p-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-full gradient-header flex items-center justify-center mx-auto mb-4 text-white text-2xl">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-medical-dark">Iniciar Sesión</h1>
+                <p class="text-gray-600 mt-2">Bienvenido a Medical Reserva</p>
+            </div>
+            
+            <!-- Form -->
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Username -->
+                <div>
+                    <label for="id_username" class="block text-sm font-medium text-gray-700 mb-2">
+                        Usuario o Email
+                    </label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="id_username"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-medical-blue transition"
+                        placeholder="tu_usuario"
+                        required
+                    >
+                </div>
+                
+                <!-- Password -->
+                <div>
+                    <label for="id_password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Contraseña
+                    </label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="id_password"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-medical-blue transition"
+                        placeholder="••••••••"
+                        required
+                    >
+                </div>
+                
+                <!-- Remember Me -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="remember_me" class="rounded">
+                        <span class="text-sm text-gray-600">Recuérdame</span>
+                    </label>
+                    <a href="#" class="text-sm text-medical-blue hover:text-medical-dark transition">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+                
+                <!-- Submit Button -->
+                <button 
+                    type="submit"
+                    class="w-full btn-primary text-white font-semibold py-3 rounded-lg transition hover:shadow-lg"
+                >
+                    <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                </button>
+            </form>
+            
+            <!-- Divider -->
+            <div class="relative my-8">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">O</span>
+                </div>
+            </div>
+            
+            <!-- Register Link -->
+            <div class="text-center">
+                <p class="text-gray-600">
+                    ¿No tienes cuenta?
+                    <a href="#" class="text-medical-blue font-semibold hover:text-medical-dark transition">
+                        Regístrate aquí
+                    </a>
+                </p>
+            </div>
+            
+            <!-- Error Messages -->
+            {% if form.non_field_errors %}
+            <div class="mt-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
+                {% for error in form.non_field_errors %}
+                <p class="text-red-700 text-sm">
+                    <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                </p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Info Cards -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-medical-light-blue rounded-lg p-4 text-center">
+                <i class="fas fa-key text-medical-blue text-2xl mb-2"></i>
+                <p class="text-sm text-gray-700">Usuario demo: <span class="font-semibold">paciente1</span></p>
+            </div>
+            <div class="bg-medical-light-blue rounded-lg p-4 text-center">
+                <i class="fas fa-lock text-medical-blue text-2xl mb-2"></i>
+                <p class="text-sm text-gray-700">Contraseña: <span class="font-semibold">demo1234</span></p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

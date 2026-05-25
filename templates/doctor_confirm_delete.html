@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Doctor - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-center mb-4">
+            <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <i class="fas fa-exclamation-triangle text-2xl"></i>
+            </div>
+        </div>
+        
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">¿Estás seguro?</h1>
+        <p class="text-center text-gray-600 mb-6">
+            Vas a eliminar al doctor <strong>{{ object.nombre }}</strong>. Esta acción no se puede deshacer.
+        </p>
+        
+        <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <p class="text-red-700 text-sm">
+                <strong>Advertencia:</strong> Se eliminarán todos los datos asociados a este doctor, incluidas sus reservas.
+            </p>
+        </div>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <button type="submit" class="w-full bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition">
+                <i class="fas fa-trash mr-2"></i>Sí, Eliminar
+            </button>
+            <a href="{% url 'admin_doctores' %}" class="block w-full bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-400 transition text-center">
+                <i class="fas fa-times mr-2"></i>Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

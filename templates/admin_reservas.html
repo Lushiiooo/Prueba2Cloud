@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Reservas - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-medical-dark mb-2">
+                    <i class="fas fa-calendar-check text-purple-600 mr-3"></i>Gestionar Reservas
+                </h1>
+                <p class="text-gray-600">Total: <span class="font-bold text-purple-600">{{ total }} reservas</span></p>
+            </div>
+            <div class="space-x-2">
+                <a href="{% url 'admin_dashboard' %}" class="btn-primary text-white px-6 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver al Panel
+                </a>
+                <a href="{% url 'index' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition">
+                    <i class="fas fa-home mr-2"></i>Inicio
+                </a>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'reserva_create' %}" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition inline-block">
+                <i class="fas fa-plus mr-2"></i>Crear Nueva Reserva
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="mb-6 flex gap-2 flex-wrap">
+        <a href="{% url 'admin_reservas' %}" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition {% if not estado_filter %}bg-medical-blue text-white{% else %}bg-white text-gray-700 border border-gray-300 hover:bg-gray-50{% endif %}">
+            <i class="fas fa-list mr-2"></i>Todas ({{ total }})
+        </a>
+        {% for estado in estados %}
+        <a href="?estado={{ estado }}" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition {% if estado_filter == estado %}bg-medical-blue text-white{% else %}bg-white text-gray-700 border border-gray-300 hover:bg-gray-50{% endif %}">
+            <i class="fas fa-filter mr-2"></i>{{ estado|capfirst }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Tabla de Reservas -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-purple-100 border-b-2 border-purple-600">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-purple-900">Paciente</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-purple-900">Doctor</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-purple-900">Fecha/Hora</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-purple-900">Razón</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-purple-900">Estado</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-purple-900">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reserva in reservas %}
+                    <tr class="border-b hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <i class="fas fa-user mr-2 text-medical-teal"></i>{{ reserva.paciente.usuario.first_name }} {{ reserva.paciente.usuario.last_name }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            <i class="fas fa-user-md mr-2 text-medical-blue"></i>{{ reserva.doctor.nombre }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            <i class="fas fa-calendar-alt mr-2"></i>{{ reserva.fecha_hora|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ reserva.razon_consulta|truncatewords:3 }}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                {% if reserva.estado == 'pendiente' %}bg-yellow-100 text-yellow-800
+                                {% elif reserva.estado == 'confirmada' %}bg-blue-100 text-blue-800
+                                {% elif reserva.estado == 'completada' %}bg-green-100 text-green-800
+                                {% elif reserva.estado == 'cancelada' %}bg-red-100 text-red-800
+                                {% endif %}">
+                                {% if reserva.estado == 'pendiente' %}
+                                    <i class="fas fa-hourglass-end mr-1"></i>
+                                {% elif reserva.estado == 'confirmada' %}
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                {% elif reserva.estado == 'completada' %}
+                                    <i class="fas fa-thumbs-up mr-1"></i>
+                                {% elif reserva.estado == 'cancelada' %}
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                {% endif %}
+                                {{ reserva.get_estado_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm space-x-2">
+                            <a href="{% url 'reserva_update' reserva.id %}" 
+                               class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-edit mr-1"></i>Editar
+                            </a>
+                            
+                            {% if reserva.estado != 'confirmada' and reserva.estado != 'completada' and reserva.estado != 'cancelada' %}
+                            <a href="{% url 'admin_reserva_confirmar' reserva.id %}" 
+                               class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-check mr-1"></i>Confirmar
+                            </a>
+                            {% endif %}
+                            
+                            {% if reserva.estado == 'confirmada' %}
+                            <a href="{% url 'admin_reserva_completar' reserva.id %}" 
+                               class="bg-teal-500 hover:bg-teal-600 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-check-double mr-1"></i>Completar
+                            </a>
+                            {% endif %}
+                            
+                            {% if reserva.estado != 'cancelada' and reserva.estado != 'completada' %}
+                            <a href="{% url 'admin_reserva_cancelar' reserva.id %}" 
+                               class="bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-ban mr-1"></i>Cancelar
+                            </a>
+                            {% endif %}
+                            
+                            <a href="{% url 'reserva_delete' reserva.id %}" 
+                               class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-trash mr-1"></i>Eliminar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-600">
+                            <i class="fas fa-inbox text-3xl text-gray-400 mb-2"></i>
+                            <p class="mt-2">No hay reservas{% if estado_filter %} con estado "{{ estado_filter }}"{% endif %}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

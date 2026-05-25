@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Administración - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-medical-dark mb-2">
+            <i class="fas fa-chart-line text-medical-blue mr-3"></i>Panel de Administración
+        </h1>
+        <p class="text-gray-600">Gestiona doctores, pacientes y reservas</p>
+    </div>
+
+    <!-- Tarjetas de Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total de Doctores -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Total de Doctores</p>
+                    <p class="text-3xl font-bold text-medical-blue mt-2">{{ total_doctores }}</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-check-circle text-green-500 mr-1"></i>{{ doctores_disponibles }} disponibles
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-medical-light-blue flex items-center justify-center text-medical-blue">
+                    <i class="fas fa-user-md text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Pacientes -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Total de Pacientes</p>
+                    <p class="text-3xl font-bold text-medical-teal mt-2">{{ total_pacientes }}</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-users mr-1"></i>Usuarios registrados
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center text-medical-teal">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total de Reservas -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Total de Reservas</p>
+                    <p class="text-3xl font-bold text-purple-600 mt-2">{{ total_reservas }}</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-calendar-alt mr-1"></i>Todas las citas
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                    <i class="fas fa-calendar-check text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservas Pendientes -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Reservas Pendientes</p>
+                    <p class="text-3xl font-bold text-yellow-600 mt-2">{{ reservas_pendientes }}</p>
+                    <p class="text-xs text-gray-500 mt-2">
+                        <i class="fas fa-clock mr-1"></i>Requieren confirmación
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                    <i class="fas fa-hourglass-end text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Segunda Fila de Estadísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Reservas Confirmadas -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm">Confirmadas</p>
+                    <p class="text-2xl font-bold text-green-600">{{ reservas_confirmadas }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservas Completadas -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <i class="fas fa-thumbs-up text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm">Completadas</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ reservas_completadas }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservas Canceladas -->
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                    <i class="fas fa-times-circle text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm">Canceladas</p>
+                    <p class="text-2xl font-bold text-red-600">{{ reservas_canceladas }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de Acción Rápida -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <a href="{% url 'admin_doctores' %}" class="bg-white rounded-lg shadow-md p-6 card-hover text-center hover:shadow-lg transition">
+            <div class="text-4xl text-medical-blue mb-3">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Gestionar Doctores</h3>
+            <p class="text-sm text-gray-600">Agregar, editar o desactivar doctores</p>
+        </a>
+
+        <a href="{% url 'admin_pacientes' %}" class="bg-white rounded-lg shadow-md p-6 card-hover text-center hover:shadow-lg transition">
+            <div class="text-4xl text-medical-teal mb-3">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Gestionar Pacientes</h3>
+            <p class="text-sm text-gray-600">Ver información de pacientes</p>
+        </a>
+
+        <a href="{% url 'admin_reservas' %}" class="bg-white rounded-lg shadow-md p-6 card-hover text-center hover:shadow-lg transition">
+            <div class="text-4xl text-purple-600 mb-3">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Gestionar Reservas</h3>
+            <p class="text-sm text-gray-600">Confirmar, completar o cancelar citas</p>
+        </a>
+
+        <a href="{% url 'index' %}" class="bg-white rounded-lg shadow-md p-6 card-hover text-center hover:shadow-lg transition">
+            <div class="text-4xl text-gray-600 mb-3">
+                <i class="fas fa-home"></i>
+            </div>
+            <h3 class="font-bold text-gray-800 mb-2">Volver al Inicio</h3>
+            <p class="text-sm text-gray-600">Salir del panel de admin</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

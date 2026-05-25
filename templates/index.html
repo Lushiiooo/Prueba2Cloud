@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}Medical Reserva - Plataforma de Reservas Médicas{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="gradient-header text-white py-20 md:py-32">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <!-- Contenido Izquierdo -->
+            <div class="space-y-6">
+                <div class="inline-block">
+                    <span class="bg-white bg-opacity-20 px-4 py-2 rounded-full text-sm font-medium">
+                        <i class="fas fa-check-circle mr-2"></i>Servicios 24/7 Disponibles
+                    </span>
+                </div>
+                
+                <h1 class="text-4xl md:text-5xl font-bold leading-tight">
+                    Reserva tu Cita Médica
+                    <span class="text-green-300">de Forma Fácil</span>
+                </h1>
+                
+                <p class="text-lg text-white text-opacity-90 max-w-md">
+                    Conecta con los mejores profesionales de la salud. Realiza tu reserva en segundos y accede a atención médica de calidad.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard_paciente' %}" class="btn-primary text-white font-semibold px-8 py-3 rounded-lg hover:shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Mis Reservas</span>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn-primary text-white font-semibold px-8 py-3 rounded-lg hover:shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Iniciar Sesión</span>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'lista_doctores' %}" class="bg-white text-medical-blue font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition flex items-center justify-center space-x-2">
+                        <i class="fas fa-user-md"></i>
+                        <span>Explorar Doctores</span>
+                    </a>
+                </div>
+                
+                <!-- Estadísticas -->
+                <div class="grid grid-cols-3 gap-4 pt-8">
+                    <div>
+                        <p class="text-3xl font-bold">{{ total_doctores }}</p>
+                        <p class="text-white text-opacity-75 text-sm">Profesionales</p>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-bold">{{ total_pacientes }}</p>
+                        <p class="text-white text-opacity-75 text-sm">Pacientes</p>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-bold">{{ total_reservas }}</p>
+                        <p class="text-white text-opacity-75 text-sm">Consultas</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contenido Derecho - Ilustración -->
+            <div class="hidden md:flex items-center justify-center">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-white opacity-10 rounded-3xl blur-3xl"></div>
+                    <div class="relative bg-white bg-opacity-10 p-8 rounded-3xl backdrop-blur-sm">
+                        <div class="text-center">
+                            <i class="fas fa-stethoscope text-6xl mb-4"></i>
+                            <p class="text-2xl font-bold">Salud en Tus Manos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Características Principales -->
+<section class="bg-white py-16 md:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-medical-dark mb-4">
+                Por qué Elegir Medical Reserva
+            </h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Ofrecemos una experiencia integral en la búsqueda y reserva de servicios médicos profesionales.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="card-hover bg-medical-light-blue p-8 rounded-xl text-center">
+                <div class="w-16 h-16 rounded-full gradient-header flex items-center justify-center mx-auto mb-4 text-white text-2xl">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3 class="text-xl font-bold text-medical-dark mb-3">Rápido y Fácil</h3>
+                <p class="text-gray-700">
+                    Reserva tu cita en solo 3 clics. Nuestro sistema es intuitivo y diseñado para tu comodidad.
+                </p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="card-hover bg-medical-light-blue p-8 rounded-xl text-center">
+                <div class="w-16 h-16 rounded-full gradient-header flex items-center justify-center mx-auto mb-4 text-white text-2xl">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="text-xl font-bold text-medical-dark mb-3">Seguro y Confiable</h3>
+                <p class="text-gray-700">
+                    Tus datos están protegidos con los más altos estándares de seguridad médica.
+                </p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="card-hover bg-medical-light-blue p-8 rounded-xl text-center">
+                <div class="w-16 h-16 rounded-full gradient-header flex items-center justify-center mx-auto mb-4 text-white text-2xl">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="text-xl font-bold text-medical-dark mb-3">Disponible 24/7</h3>
+                <p class="text-gray-700">
+                    Gestiona tus citas en cualquier momento del día. Recordatorios automáticos incluidos.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Doctores Destacados -->
+<section class="py-16 md:py-24 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-end mb-12">
+            <div>
+                <h2 class="text-3xl md:text-4xl font-bold text-medical-dark mb-2">
+                    Nuestros Doctores
+                </h2>
+                <p class="text-gray-600">
+                    Profesionales especializados listos para brindarte la mejor atención.
+                </p>
+            </div>
+            <a href="{% url 'lista_doctores' %}" class="text-medical-blue font-semibold hover:text-medical-dark transition flex items-center space-x-2">
+                <span>Ver Todos</span>
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        
+        {% if doctores_destacados %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for doctor in doctores_destacados %}
+            <div class="card-hover bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition">
+                <!-- Header -->
+                <div class="gradient-header text-white p-6 text-center">
+                    <div class="w-20 h-20 rounded-full bg-white bg-opacity-20 flex items-center justify-center mx-auto mb-4 text-3xl">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3 class="text-xl font-bold">Dr. {{ doctor.nombre }}</h3>
+                    <p class="text-white text-opacity-90">{{ doctor.get_especialidad_display }}</p>
+                </div>
+                
+                <!-- Body -->
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">
+                            <i class="fas fa-certificate mr-2 text-medical-teal"></i>Cédula
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ doctor.numero_cedula }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">
+                            <i class="fas fa-calendar mr-2 text-medical-teal"></i>Experiencia
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ doctor.experiencia_anos }} años</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">
+                            <i class="fas fa-envelope mr-2 text-medical-teal"></i>Email
+                        </span>
+                        <span class="font-semibold text-gray-900 truncate">{{ doctor.email }}</span>
+                    </div>
+                    
+                    {% if doctor.disponible %}
+                    <div class="flex items-center space-x-2 text-green-600">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="text-sm font-medium">Disponible</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Footer -->
+                <div class="px-6 pb-6">
+                    <a href="{% url 'detalle_doctor' doctor.id %}" class="block w-full text-center btn-primary text-white py-3 rounded-lg font-semibold transition">
+                        <i class="fas fa-calendar-plus mr-2"></i>Ver Disponibilidad
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <p class="text-gray-600">No hay doctores disponibles en este momento.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="gradient-header text-white py-16">
+    <div class="max-w-4xl mx-auto text-center px-4">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            ¿Listo para tu siguiente cita?
+        </h2>
+        <p class="text-lg text-white text-opacity-90 mb-8">
+            Únete a miles de pacientes que ya confían en Medical Reserva para su salud.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if user.is_authenticated %}
+            <a href="{% url 'crear_reserva' %}" class="bg-white text-medical-blue font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition flex items-center justify-center space-x-2">
+                <i class="fas fa-plus"></i>
+                <span>Crear Nueva Reserva</span>
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="bg-white text-medical-blue font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition flex items-center justify-center space-x-2">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>Iniciar Sesión</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'lista_doctores' %}" class="border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition flex items-center justify-center space-x-2">
+                <i class="fas fa-user-md"></i>
+                <span>Encontrar Doctor</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

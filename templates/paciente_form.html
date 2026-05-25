@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold text-medical-blue mb-6">{{ title }}</h1>
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border-l-4 border-red-400 p-4">
+                    <p class="text-red-700 font-semibold">Errores encontrados:</p>
+                    {% for error in form.non_field_errors %}
+                        <p class="text-red-600">• {{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <fieldset class="border-t-2 border-gray-200 pt-6">
+                <legend class="text-lg font-semibold text-gray-800">Información de Usuario</legend>
+                
+                <!-- Nombre -->
+                <div class="mt-4">
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.first_name.label }}
+                    </label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.first_name.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Apellido -->
+                <div class="mt-4">
+                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.last_name.label }}
+                    </label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.last_name.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Email -->
+                <div class="mt-4">
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.email.label }}
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.email.errors }}</p>
+                    {% endif %}
+                </div>
+            </fieldset>
+            
+            <fieldset class="border-t-2 border-gray-200 pt-6">
+                <legend class="text-lg font-semibold text-gray-800">Información Médica</legend>
+                
+                <!-- Fecha de Nacimiento -->
+                <div class="mt-4">
+                    <label for="{{ form.fecha_nacimiento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.fecha_nacimiento.label }}
+                    </label>
+                    {{ form.fecha_nacimiento }}
+                    {% if form.fecha_nacimiento.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.fecha_nacimiento.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Teléfono -->
+                <div class="mt-4">
+                    <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.telefono.label }}
+                    </label>
+                    {{ form.telefono }}
+                    {% if form.telefono.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.telefono.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Dirección -->
+                <div class="mt-4">
+                    <label for="{{ form.direccion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.direccion.label }}
+                    </label>
+                    {{ form.direccion }}
+                    {% if form.direccion.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.direccion.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Número de Seguro -->
+                <div class="mt-4">
+                    <label for="{{ form.numero_seguro.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.numero_seguro.label }}
+                    </label>
+                    {{ form.numero_seguro }}
+                    {% if form.numero_seguro.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.numero_seguro.errors }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Alergias -->
+                <div class="mt-4">
+                    <label for="{{ form.alergias.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.alergias.label }}
+                    </label>
+                    {{ form.alergias }}
+                    {% if form.alergias.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.alergias.errors }}</p>
+                    {% endif %}
+                </div>
+            </fieldset>
+            
+            <!-- Botones -->
+            <div class="flex gap-4 pt-6">
+                <button type="submit" class="btn-primary text-white px-6 py-2 rounded-lg font-medium transition">
+                    <i class="fas fa-save mr-2"></i>Guardar Cambios
+                </button>
+                <a href="{% url 'dashboard_paciente' %}" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-400 transition">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

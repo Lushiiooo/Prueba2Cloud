@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Pacientes - Medical Reserva{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-4xl font-bold text-medical-dark mb-2">
+                    <i class="fas fa-users text-medical-teal mr-3"></i>Gestionar Pacientes
+                </h1>
+                <p class="text-gray-600">Total: <span class="font-bold text-medical-teal">{{ total }} pacientes</span></p>
+            </div>
+            <div class="space-x-2">
+                <a href="{% url 'admin_dashboard' %}" class="btn-primary text-white px-6 py-2 rounded-lg transition">
+                    <i class="fas fa-arrow-left mr-2"></i>Volver al Panel
+                </a>
+                <a href="{% url 'index' %}" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition">
+                    <i class="fas fa-home mr-2"></i>Inicio
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Pacientes -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-teal-100 border-b-2 border-medical-teal">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Nombre</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Email</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Teléfono</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Seguro</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Fecha Nacimiento</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Alergias</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-medical-teal">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for paciente in pacientes %}
+                    <tr class="border-b hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <i class="fas fa-user-circle text-medical-teal mr-2"></i>{{ paciente.usuario.first_name }} {{ paciente.usuario.last_name }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ paciente.usuario.email }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ paciente.telefono|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ paciente.numero_seguro|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ paciente.fecha_nacimiento|date:"d/m/Y" }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {% if paciente.alergias %}
+                            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                                <i class="fas fa-exclamation-circle mr-1"></i>{{ paciente.alergias|truncatewords:3 }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400">Ninguna</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm space-x-2">
+                            <a href="{% url 'admin_paciente_update' paciente.id %}" 
+                               class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-edit mr-1"></i>Editar
+                            </a>
+                            <a href="{% url 'admin_paciente_delete' paciente.id %}" 
+                               class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition inline-block">
+                                <i class="fas fa-trash mr-1"></i>Eliminar
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-600">
+                            <i class="fas fa-inbox text-3xl text-gray-400 mb-2"></i>
+                            <p class="mt-2">No hay pacientes registrados</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

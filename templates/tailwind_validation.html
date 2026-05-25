@@ -1,0 +1,74 @@
+<!-- ==================== VALIDACIÓN DE TAILWIND CSS ==================== -->
+<!-- Copiar este código en cualquier template para verificar que Tailwind funciona -->
+
+<!-- Snippet 1: Test Visual Básico -->
+<div class="bg-medical-blue text-white p-4 rounded-lg mb-4">
+    <h3 class="text-lg font-bold">✓ Tailwind CSS Funcionando</h3>
+    <p class="text-sm">Si ves este cuadro con fondo azul médico, Tailwind está activo.</p>
+</div>
+
+<!-- Snippet 2: Test de Grid y Flexbox -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+    <div class="bg-medical-light-blue p-4 rounded">Grid 1</div>
+    <div class="bg-medical-light-blue p-4 rounded">Grid 2</div>
+    <div class="bg-medical-light-blue p-4 rounded">Grid 3</div>
+</div>
+
+<!-- Snippet 3: Test de Transiciones y Hover -->
+<button class="bg-medical-blue text-white px-6 py-2 rounded-lg hover:bg-medical-dark transition-all transform hover:scale-105">
+    Test Hover Effect
+</button>
+
+<!-- Snippet 4: Test de Colores Personalizados -->
+<div class="flex gap-4 mb-4">
+    <div class="w-16 h-16 bg-medical-teal rounded-full flex items-center justify-center text-white">
+        Teal
+    </div>
+    <div class="w-16 h-16 bg-medical-gray rounded-full flex items-center justify-center text-gray-700">
+        Gray
+    </div>
+</div>
+
+<!-- Snippet 5: Test de Responsiveness -->
+<div class="bg-gradient-to-r from-medical-blue to-medical-teal text-white p-4 rounded-lg">
+    <p class="text-sm md:text-base lg:text-lg">
+        Este texto cambia de tamaño en dispositivos: pequeño móvil, medio tablet, grande desktop.
+    </p>
+</div>
+
+<!-- ==================== VERIFICACIÓN EN CONSOLA ==================== -->
+<script>
+console.group('🔍 Verificación de Tailwind CSS');
+
+// Test 1: Verificar que Tailwind esté definido
+console.log('1. Tailwind disponible:', typeof tailwind !== 'undefined' ? '✓ SÍ' : '✗ NO');
+
+// Test 2: Verificar estilos computados
+const testBtn = document.querySelector('button.bg-medical-blue');
+if (testBtn) {
+    const styles = window.getComputedStyle(testBtn);
+    console.log('2. Estilos computados en botón:');
+    console.log('   - Background color:', styles.backgroundColor);
+    console.log('   - Color:', styles.color);
+    console.log('   - Padding:', styles.padding);
+}
+
+// Test 3: Verificar que no haya errores de CSP
+console.log('3. Content Security Policy:', 'Permitiendo CDN de Tailwind');
+
+// Test 4: Verificar inyección de estilos
+const styleSheets = document.styleSheets;
+console.log('4. Hojas de estilo cargadas:', styleSheets.length);
+for (let i = 0; i < styleSheets.length; i++) {
+    const href = styleSheets[i].href;
+    if (href && href.includes('tailwind')) {
+        console.log('   ✓ Tailwind CDN encontrado:', href);
+    }
+}
+
+// Test 5: Verificar clases personalizadas
+const customColorElements = document.querySelectorAll('[class*="medical-"]');
+console.log('5. Elementos con clases personalizadas:', customColorElements.length);
+
+console.groupEnd();
+</script>

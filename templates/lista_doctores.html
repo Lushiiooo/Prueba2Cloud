@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuestros Doctores - Medical Reserva{% endblock %}
+
+{% block content %}
+<section class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-12">
+            <h1 class="text-4xl font-bold text-medical-dark mb-2">
+                <i class="fas fa-stethoscope mr-3"></i>Nuestros Profesionales
+            </h1>
+            <p class="text-lg text-gray-600">
+                Encuentra el especialista que necesitas para tu salud
+            </p>
+        </div>
+        
+        <!-- Filtro por Especialidad -->
+        <div class="mb-8 bg-white rounded-xl shadow-md p-6">
+            <form method="get" class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <label for="especialidad" class="block text-sm font-medium text-gray-700 mb-2">
+                        Filtrar por Especialidad
+                    </label>
+                    <select 
+                        name="especialidad" 
+                        id="especialidad"
+                        class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-medical-blue transition"
+                        onchange="this.form.submit()"
+                    >
+                        <option value="">-- Todas las especialidades --</option>
+                        {% for value, label in especialidades %}
+                        <option value="{{ value }}" {% if especialidad_seleccionada == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                {% if especialidad_seleccionada %}
+                <div class="flex items-end">
+                    <a href="{% url 'lista_doctores' %}" class="text-medical-blue font-semibold hover:text-medical-dark transition flex items-center space-x-2">
+                        <i class="fas fa-times"></i>
+                        <span>Limpiar filtro</span>
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+        
+        <!-- Doctores Grid -->
+        {% if doctores %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for doctor in doctores %}
+            <div class="card-hover bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
+                <!-- Doctor Header -->
+                <div class="gradient-header text-white p-8 text-center">
+                    <div class="w-24 h-24 rounded-full bg-white bg-opacity-20 flex items-center justify-center mx-auto mb-4 text-5xl">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">Dr. {{ doctor.nombre }}</h3>
+                    <p class="text-white text-opacity-90 text-lg">{{ doctor.get_especialidad_display }}</p>
+                </div>
+                
+                <!-- Doctor Info -->
+                <div class="p-8 space-y-4">
+                    <!-- Cédula Profesional -->
+                    <div class="flex items-start justify-between pb-4 border-b border-gray-200">
+                        <span class="text-gray-600 flex items-center space-x-2">
+                            <i class="fas fa-certificate text-medical-teal"></i>
+                            <span>Cédula Profesional</span>
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ doctor.numero_cedula }}</span>
+                    </div>
+                    
+                    <!-- Experiencia -->
+                    <div class="flex items-start justify-between pb-4 border-b border-gray-200">
+                        <span class="text-gray-600 flex items-center space-x-2">
+                            <i class="fas fa-briefcase text-medical-teal"></i>
+                            <span>Años de Experiencia</span>
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ doctor.experiencia_anos }} años</span>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="flex items-start justify-between pb-4 border-b border-gray-200">
+                        <span class="text-gray-600 flex items-center space-x-2">
+                            <i class="fas fa-envelope text-medical-teal"></i>
+                            <span>Email</span>
+                        </span>
+                        <span class="font-semibold text-gray-900 text-right truncate">{{ doctor.email }}</span>
+                    </div>
+                    
+                    <!-- Teléfono -->
+                    {% if doctor.telefono %}
+                    <div class="flex items-start justify-between pb-4 border-b border-gray-200">
+                        <span class="text-gray-600 flex items-center space-x-2">
+                            <i class="fas fa-phone text-medical-teal"></i>
+                            <span>Teléfono</span>
+                        </span>
+                        <span class="font-semibold text-gray-900">{{ doctor.telefono }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Estado de Disponibilidad -->
+                    <div class="flex items-center pt-4 space-x-2">
+                        {% if doctor.disponible %}
+                        <span class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-green-50 text-green-700 text-sm font-semibold">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Disponible</span>
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-red-50 text-red-700 text-sm font-semibold">
+                            <i class="fas fa-times-circle"></i>
+                            <span>No Disponible</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="px-8 pb-8 space-y-3">
+                    <a href="{% url 'detalle_doctor' doctor.id %}" class="block w-full text-center btn-primary text-white font-semibold py-3 rounded-lg transition hover:shadow-lg">
+                        <i class="fas fa-calendar-plus mr-2"></i>Ver Disponibilidad
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'crear_reserva' %}" class="block w-full text-center border-2 border-medical-blue text-medical-blue font-semibold py-2 rounded-lg hover:bg-medical-light-blue transition">
+                        <i class="fas fa-booking mr-2"></i>Reservar Cita
+                    </a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="block w-full text-center border-2 border-medical-blue text-medical-blue font-semibold py-2 rounded-lg hover:bg-medical-light-blue transition">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Iniciar Sesión
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Sin Resultados -->
+        <div class="text-center py-16">
+            <div class="inline-block">
+                <div class="w-24 h-24 rounded-full gradient-header flex items-center justify-center mx-auto mb-6 text-white text-4xl">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-medical-dark mb-2">
+                    No se encontraron resultados
+                </h3>
+                <p class="text-gray-600 mb-6 max-w-md">
+                    No hay doctores disponibles con la especialidad seleccionada en este momento.
+                </p>
+                <a href="{% url 'lista_doctores' %}" class="btn-primary text-white font-semibold px-8 py-3 rounded-lg inline-block transition hover:shadow-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>Ver Todos los Doctores
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
