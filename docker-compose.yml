@@ -5,15 +5,13 @@ services:
     image: postgres:15-alpine
     container_name: medical_db
     environment:
-      POSTGRES_DB: medical_reserva
-      POSTGRES_USER: medical_user
-      POSTGRES_PASSWORD: medical_secure_pwd_2024
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medical_user -d medical_reserva"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,18 +19,15 @@ services:
   redis:
     image: redis:7-alpine
     container_name: medical_redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # Sin 'ports', Redis solo es accesible internamente
 
   web:
     build: .
     container_name: medical_web
-    command: gunicorn medicalreserva.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn medicalreserva.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:
@@ -42,9 +37,9 @@ services:
       DB_NAME: "${DB_NAME}"
       DB_USER: "${DB_USER}"
       DB_PASSWORD: "${DB_PASSWORD}"
-      DB_HOST: "${DB_HOST}"
+      DB_HOST: "db"
       REDIS_URL: "redis://redis:6379/0"
-      SECRET_KEY: "django-insecure-dev-key-only-for-local-development"
+      SECRET_KEY: "${SECRET_KEY}"
     depends_on:
       db:
         condition: service_healthy
@@ -58,14 +53,13 @@ services:
     volumes:
       - .:/app
     environment:
-      DEBUG: "False"
-      DB_NAME: "medical_reserva"
-      DB_USER: "medical_user"
-      DB_PASSWORD: "medical_secure_pwd_2024"
+      DEBUG: "${DEBUG}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
       DB_HOST: "db"
-      DB_PORT: "5432"
       REDIS_URL: "redis://redis:6379/0"
-      SECRET_KEY: "django-insecure-dev-key-only-for-local-development"
+      SECRET_KEY: "${SECRET_KEY}"
     depends_on:
       db:
         condition: service_healthy
