@@ -13,6 +13,7 @@ from django.urls import reverse_lazy
 from .models import Reserva, Paciente, Doctor
 from .forms import DoctorForm, PacienteEditForm, ReservaForm, RegistroForm
 from .tasks import enviar_correo_reserva
+from datatime import datatime
 
 
 def index(request):
@@ -87,57 +88,68 @@ def detalle_reserva(request, reserva_id):
 
 @login_required
 def crear_reserva(request):
-    """Create a new reservation."""
+    """
+    Vista para crear una nueva reserva.
+    Maneja la recepción de datos, validación de formato de fecha 
+    y asignación de relaciones.
+    """
     try:
         paciente = request.user.paciente_profile
     except Paciente.DoesNotExist:
+        # Si el usuario no tiene perfil de paciente, redirige a algún lugar seguro
         return redirect('index')
     
-    # 1. Mantenemos la forma original de obtener los doctores
+    # Obtenemos los doctores disponibles para el select en el HTML
     doctores = Doctor.objects.filter(disponible=True)
     
     if request.method == 'POST':
-        # Mantenemos tu lógica original de extracción manual
+        # Obtenemos los valores desde el POST
         doctor_id = request.POST.get('doctor_id')
-        fecha_hora_str = request.POST.get('fecha_hora')
+        fecha_hora_str = request.POST.get('fecha_hora') # Viene de <input type="datetime-local">
         razon_consulta = request.POST.get('razon_consulta')
         
+        # DEBUG: Mira qué llega al servidor
+        print(f"DEBUG: Doctor={doctor_id}, Fecha='{fecha_hora_str}', Razon={razon_consulta}")
+        
+        # Validación básica de presencia de datos
+        if not doctor_id or not fecha_hora_str:
+            context = {'error': 'Por favor completa todos los campos.', 'doctores': doctores}
+            return render(request, 'crear_reserva.html', context)
+
         try:
+            # 1. Limpieza de formato de fecha (Convierte '2026-05-30T14:30' a '2026-05-30 14:30')
+            fecha_limpia = fecha_hora_str.replace('T', ' ')
+            
+            # 2. Obtención del doctor
             doctor = Doctor.objects.get(id=doctor_id, disponible=True)
             
-            # Validar disponibilidad
-            if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_hora_str).exists():
-                context = {
-                    'error': 'El doctor no está disponible en ese horario.',
-                    'doctores': doctores, # Enviamos los doctores de nuevo aquí
-                }
+            # 3. Validación de duplicados (opcional)
+            if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_limpia).exists():
+                context = {'error': 'El doctor ya tiene una reserva en ese horario.', 'doctores': doctores}
                 return render(request, 'crear_reserva.html', context)
             
-            # Crear la reserva con tu lógica original
+            # 4. Creación del objeto
             reserva = Reserva.objects.create(
                 paciente=paciente,
                 doctor=doctor,
-                fecha_hora=fecha_hora_str,
+                fecha_hora=fecha_limpia,
                 razon_consulta=razon_consulta,
                 estado='pendiente'
             )
             
+            # 5. Tarea en segundo plano
             enviar_correo_reserva.delay(reserva.id)
+            
             return redirect('detalle_reserva', reserva_id=reserva.id)
-        
+            
         except Exception as e:
-            print(f"ERROR: {e}")
-            context = {
-                'error': f'Error al crear la reserva: {str(e)}',
-                'doctores': doctores, # Y aquí también
-            }
+            print(f"ERROR AL GUARDAR: {e}")
+            context = {'error': f'Error al guardar: {str(e)}', 'doctores': doctores}
             return render(request, 'crear_reserva.html', context)
     
-    # 2. Contexto original para la carga inicial de la página
+    # Carga inicial de la página
     context = {
-        'paciente': paciente,
         'doctores': doctores,
-        'especialidades': Doctor.SPECIALTIES,
     }
     return render(request, 'crear_reserva.html', context)
 
