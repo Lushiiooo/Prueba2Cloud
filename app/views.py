@@ -86,126 +86,200 @@ def detalle_reserva(request, reserva_id):
     return render(request, 'detalle_reserva.html', context)
 
 
-@login_required
+@login_required(login_url='login')
 def crear_reserva(request):
     """
     Vista para crear una nueva reserva de forma manual,
     evitando conflictos con las validaciones del ReservaForm de admin.
     """
-    # LOG INICIAL - VERIFICAR QUE LA VISTA SE EJECUTA
+    # ====================================================================================
+    # LOG CRÍTICO #1: CONFIRMAR QUE LA VISTA SE EJECUTA
+    # ====================================================================================
     import sys
-    print("\n" + "="*80, file=sys.stderr)
-    print(f"[CREAR_RESERVA] VISTA EJECUTADA - Método: {request.method}", file=sys.stderr)
-    print(f"[CREAR_RESERVA] Ruta: {request.path}", file=sys.stderr)
-    print(f"[CREAR_RESERVA] Usuario: {request.user}", file=sys.stderr)
-    print("="*80, file=sys.stderr)
+    import logging
     
-    print("\n" + "="*80)
-    print(f"[CREAR RESERVA] Método: {request.method}")
-    print("="*80)
+    logger = logging.getLogger('django')
     
+    print("\n" + "█"*100, file=sys.stderr)
+    print(f"█ [CREAR_RESERVA] ¡¡¡ VISTA EJECUTADA !!! Método: {request.method}", file=sys.stderr)
+    print(f"█ [CREAR_RESERVA] Ruta: {request.path}", file=sys.stderr)
+    print(f"█ [CREAR_RESERVA] Usuario autenticado: {request.user.is_authenticated}", file=sys.stderr)
+    print(f"█ [CREAR_RESERVA] Usuario: {request.user}", file=sys.stderr)
+    print("█"*100, file=sys.stderr)
+    
+    logger.warning(f"[CREAR_RESERVA] VISTA EJECUTADA - Método: {request.method}, Usuario: {request.user}")
+    
+    # ====================================================================================
+    # LOG CRÍTICO #2: OBTENER PACIENTE
+    # ====================================================================================
+    paciente = None
     try:
         paciente = request.user.paciente_profile
-        print(f"[✓] Paciente encontrado: {paciente}")
-    except Paciente.DoesNotExist:
-        print(f"[✗] PACIENTE NO ENCONTRADO para usuario: {request.user}")
+        print(f"█ [✓] Paciente ENCONTRADO: {paciente}", file=sys.stderr)
+        logger.warning(f"[CREAR_RESERVA] Paciente encontrado: {paciente}")
+    except Paciente.DoesNotExist as e:
+        print(f"█ [✗✗✗] PACIENTE NO EXISTE - Redirigiendo a index", file=sys.stderr)
+        print(f"█ Error: {e}", file=sys.stderr)
+        logger.error(f"[CREAR_RESERVA] Paciente NO EXISTE para usuario: {request.user}")
+        return redirect('index')
+    except AttributeError as e:
+        print(f"█ [✗✗✗] ATRIBUTO ERROR - Usuario podría no estar autenticado", file=sys.stderr)
+        print(f"█ Error: {e}", file=sys.stderr)
+        logger.error(f"[CREAR_RESERVA] AttributeError: {e}")
+        return redirect('login')
+    except Exception as e:
+        print(f"█ [✗✗✗] ERROR DESCONOCIDO obteniendo paciente", file=sys.stderr)
+        print(f"█ Error: {type(e).__name__}: {e}", file=sys.stderr)
+        logger.error(f"[CREAR_RESERVA] Error desconocido: {type(e).__name__}: {e}")
         return redirect('index')
     
-    # Obtener doctores disponibles para el select en el HTML
+    # ====================================================================================
+    # LOG CRÍTICO #3: OBTENER DOCTORES
+    # ====================================================================================
     doctores = Doctor.objects.filter(disponible=True)
-    print(f"[✓] Doctores disponibles: {doctores.count()}")
+    print(f"█ [✓] Doctores disponibles: {doctores.count()}", file=sys.stderr)
+    logger.warning(f"[CREAR_RESERVA] Doctores disponibles: {doctores.count()}")
     
+    # ====================================================================================
+    # PROCESAMIENTO DE POST
+    # ====================================================================================
     if request.method == 'POST':
-        print("\n[POST] Procesando formulario...")
-        print(f"[DEBUG] POST data completo: {dict(request.POST)}")
+        print(f"\n█ [POST] ========== PROCESANDO FORMULARIO POST ==========", file=sys.stderr)
+        print(f"█ [POST] POST data completo: {dict(request.POST)}", file=sys.stderr)
+        logger.warning(f"[CREAR_RESERVA] POST data: {dict(request.POST)}")
         
-        # Obtenemos los valores enviados por el formulario HTML
+        # Obtener valores
         doctor_id = request.POST.get('doctor_id', '').strip()
         fecha_hora_str = request.POST.get('fecha_hora', '').strip()
         razon_consulta = request.POST.get('razon_consulta', '').strip()
         
-        # DEBUG: Loguear los valores recibidos
-        print(f"\n[CAMPOS RECIBIDOS]")
-        print(f"  - doctor_id: '{doctor_id}' (tipo: {type(doctor_id)}, vacío: {not doctor_id})")
-        print(f"  - fecha_hora_str: '{fecha_hora_str}' (tipo: {type(fecha_hora_str)}, vacío: {not fecha_hora_str}, len: {len(fecha_hora_str)})")
-        print(f"  - razon_consulta: '{razon_consulta}' (tipo: {type(razon_consulta)}, vacío: {not razon_consulta})")
+        # ====================================================================================
+        # LOG CRÍTICO #4: MOSTRAR VALORES RECIBIDOS
+        # ====================================================================================
+        print(f"\n█ [VALORES RECIBIDOS]", file=sys.stderr)
+        print(f"█   doctor_id='{doctor_id}' (len={len(doctor_id)}, vacío={not doctor_id})", file=sys.stderr)
+        print(f"█   fecha_hora='{fecha_hora_str}' (len={len(fecha_hora_str)}, vacío={not fecha_hora_str})", file=sys.stderr)
+        print(f"█   razon_consulta='{razon_consulta}' (len={len(razon_consulta)}, vacío={not razon_consulta})", file=sys.stderr)
         
-        # Validación: campos vacíos
+        logger.warning(f"[CREAR_RESERVA] doctor_id='{doctor_id}', fecha_hora='{fecha_hora_str}', razon='{razon_consulta}'")
+        
+        # ====================================================================================
+        # VALIDACIÓN #1: DOCTOR_ID
+        # ====================================================================================
         if not doctor_id:
-            print(f"[✗] VALIDACIÓN FALLIDA: doctor_id está vacío")
+            print(f"█ [✗] VALIDACIÓN FALLIDA: doctor_id está vacío", file=sys.stderr)
+            logger.error(f"[CREAR_RESERVA] Validación fallida: doctor_id vacío")
             return render(request, 'crear_reserva.html', {
                 'error': 'Por favor selecciona un doctor.',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })
-        print(f"[✓] Doctor ID válido: {doctor_id}")
+        print(f"█ [✓] doctor_id válido: {doctor_id}", file=sys.stderr)
         
+        # ====================================================================================
+        # VALIDACIÓN #2: FECHA_HORA
+        # ====================================================================================
         if not fecha_hora_str:
-            print(f"[✗] VALIDACIÓN FALLIDA: fecha_hora_str está vacío")
+            print(f"█ [✗] VALIDACIÓN FALLIDA: fecha_hora está vacío", file=sys.stderr)
+            logger.error(f"[CREAR_RESERVA] Validación fallida: fecha_hora vacío")
             return render(request, 'crear_reserva.html', {
                 'error': 'Por favor completa la fecha y hora.',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })
-        print(f"[✓] Fecha hora válida: {fecha_hora_str}")
+        print(f"█ [✓] fecha_hora válida: {fecha_hora_str}", file=sys.stderr)
         
+        # ====================================================================================
+        # VALIDACIÓN #3: RAZON_CONSULTA
+        # ====================================================================================
         if not razon_consulta:
-            print(f"[✗] VALIDACIÓN FALLIDA: razon_consulta está vacío")
+            print(f"█ [✗] VALIDACIÓN FALLIDA: razon_consulta está vacío", file=sys.stderr)
+            logger.error(f"[CREAR_RESERVA] Validación fallida: razon_consulta vacío")
             return render(request, 'crear_reserva.html', {
                 'error': 'Por favor ingresa la razón de la consulta.',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })
-        print(f"[✓] Razón de consulta válida: {razon_consulta}")
-
+        print(f"█ [✓] razon_consulta válida: {razon_consulta}", file=sys.stderr)
+        
+        # ====================================================================================
+        # PROCESAMIENTO DE FECHA
+        # ====================================================================================
         try:
-            # 1. Parsear el datetime correctamente
-            # El formato enviado es "YYYY-MM-DD HH:MM" desde el JavaScript
-            print(f"\n[PARSING] Intentando parsear fecha_hora: '{fecha_hora_str}'")
+            print(f"\n█ [PARSING] Parseando fecha_hora: '{fecha_hora_str}'", file=sys.stderr)
             fecha_dt = datetime.strptime(fecha_hora_str, '%Y-%m-%d %H:%M')
-            print(f"[✓] Parseado sin zona: {fecha_dt}")
+            print(f"█ [✓] Parseado sin zona: {fecha_dt}", file=sys.stderr)
             
-            # Convertir a datetime consciente de zona horaria (usar la zona del proyecto)
             fecha_dt = timezone.make_aware(fecha_dt)
-            print(f"[✓] Convertido a timezone-aware: {fecha_dt}")
+            print(f"█ [✓] Convertido a timezone-aware: {fecha_dt}", file=sys.stderr)
+            logger.warning(f"[CREAR_RESERVA] Fecha parseada: {fecha_dt}")
             
-            # 2. Obtener el doctor
-            print(f"\n[DB QUERY] Buscando doctor con ID: {doctor_id}, disponible=True")
+        except ValueError as ve:
+            print(f"█ [✗✗✗] ERROR DE PARSING: {type(ve).__name__}: {ve}", file=sys.stderr)
+            logger.error(f"[CREAR_RESERVA] ValueError al parsear: {ve}")
+            return render(request, 'crear_reserva.html', {
+                'error': f'Formato de fecha incorrecto. Recibido: "{fecha_hora_str}"',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        
+        # ====================================================================================
+        # OBTENER DOCTOR
+        # ====================================================================================
+        try:
+            print(f"\n█ [DB] Buscando doctor: id={doctor_id}, disponible=True", file=sys.stderr)
             doctor = Doctor.objects.get(id=doctor_id, disponible=True)
-            print(f"[✓] Doctor encontrado: {doctor}")
+            print(f"█ [✓] Doctor encontrado: {doctor}", file=sys.stderr)
+            logger.warning(f"[CREAR_RESERVA] Doctor encontrado: {doctor}")
             
-            # 3. Validación de disponibilidad
-            print(f"\n[DISPONIBILIDAD] Validando si doctor tiene otra reserva en {fecha_dt}")
-            conflicto = Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_dt)
-            print(f"[DEBUG] Conflictos encontrados: {conflicto.count()}")
-            if conflicto.exists():
-                print(f"[✗] CONFLICTO DE HORARIO")
-                return render(request, 'crear_reserva.html', {
-                    'error': 'El doctor no está disponible en ese horario. Por favor selecciona otro.',
-                    'doctores': doctores,
-                    'especialidades': Doctor.SPECIALTIES,
-                })
-            print(f"[✓] Horario disponible")
-            
-            # 4. Validación de fecha en el futuro
-            ahora = timezone.now()
-            print(f"\n[FECHA] Validando que {fecha_dt} > {ahora}")
-            if fecha_dt <= ahora:
-                print(f"[✗] FECHA EN PASADO")
-                return render(request, 'crear_reserva.html', {
-                    'error': 'Por favor selecciona una fecha y hora en el futuro.',
-                    'doctores': doctores,
-                    'especialidades': Doctor.SPECIALTIES,
-                })
-            print(f"[✓] Fecha es en el futuro")
-            
-            # 5. Crear reserva manualmente (sin usar form.save() para evitar validaciones de admin)
-            print(f"\n[CREAR] Creando reserva con:")
-            print(f"  - paciente: {paciente}")
-            print(f"  - doctor: {doctor}")
-            print(f"  - fecha_hora: {fecha_dt}")
-            print(f"  - razon_consulta: {razon_consulta}")
-            print(f"  - estado: pendiente")
+        except Doctor.DoesNotExist:
+            print(f"█ [✗✗✗] DOCTOR NO ENCONTRADO: id={doctor_id}", file=sys.stderr)
+            logger.error(f"[CREAR_RESERVA] Doctor NO ENCONTRADO: {doctor_id}")
+            return render(request, 'crear_reserva.html', {
+                'error': 'El doctor seleccionado no existe o no está disponible.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        
+        # ====================================================================================
+        # VALIDAR DISPONIBILIDAD
+        # ====================================================================================
+        print(f"\n█ [DISPONIBILIDAD] Verificando conflictos...", file=sys.stderr)
+        conflicto = Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_dt)
+        if conflicto.exists():
+            print(f"█ [✗] CONFLICTO ENCONTRADO", file=sys.stderr)
+            logger.warning(f"[CREAR_RESERVA] Conflicto de horario")
+            return render(request, 'crear_reserva.html', {
+                'error': 'El doctor NO está disponible en ese horario.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        print(f"█ [✓] Horario disponible", file=sys.stderr)
+        
+        # ====================================================================================
+        # VALIDAR FECHA EN FUTURO
+        # ====================================================================================
+        ahora = timezone.now()
+        print(f"\n█ [FECHA FUTURA] Validando: {fecha_dt} > {ahora}", file=sys.stderr)
+        if fecha_dt <= ahora:
+            print(f"█ [✗] FECHA EN PASADO", file=sys.stderr)
+            logger.warning(f"[CREAR_RESERVA] Fecha en pasado")
+            return render(request, 'crear_reserva.html', {
+                'error': 'La fecha debe ser en el futuro.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        print(f"█ [✓] Fecha es futura", file=sys.stderr)
+        
+        # ====================================================================================
+        # CREAR RESERVA
+        # ====================================================================================
+        try:
+            print(f"\n█ [CREAR] Creando reserva...", file=sys.stderr)
+            print(f"█   - paciente: {paciente}", file=sys.stderr)
+            print(f"█   - doctor: {doctor}", file=sys.stderr)
+            print(f"█   - fecha_hora: {fecha_dt}", file=sys.stderr)
+            print(f"█   - razon_consulta: {razon_consulta}", file=sys.stderr)
             
             reserva = Reserva.objects.create(
                 paciente=paciente,
@@ -214,48 +288,36 @@ def crear_reserva(request):
                 razon_consulta=razon_consulta,
                 estado='pendiente'
             )
-            print(f"[✓✓✓] RESERVA CREADA EXITOSAMENTE: {reserva} (ID: {reserva.id})")
+            print(f"█ [✓✓✓] RESERVA CREADA: {reserva} (ID: {reserva.id})", file=sys.stderr)
+            logger.warning(f"[CREAR_RESERVA] ✓✓✓ RESERVA CREADA: {reserva.id}")
             
-            # 6. Tarea en segundo plano
-            print(f"\n[EMAIL] Enviando correo de confirmación...")
+            # Enviar correo
             try:
+                print(f"█ [EMAIL] Enviando correo...", file=sys.stderr)
                 enviar_correo_reserva.delay(reserva.id)
-                print(f"[✓] Tarea de email enviada a Celery")
+                print(f"█ [✓] Correo enviado a Celery", file=sys.stderr)
             except Exception as email_error:
-                print(f"[⚠] Error al enviar email (Celery): {email_error}")
+                print(f"█ [⚠] Error en correo (no crítico): {email_error}", file=sys.stderr)
+                logger.warning(f"[CREAR_RESERVA] Error en correo: {email_error}")
             
-            print(f"[REDIRECT] Redirigiendo a detalle_reserva con ID: {reserva.id}")
+            print(f"█ [REDIRECT] Redirigiendo a detalle_reserva id={reserva.id}", file=sys.stderr)
             return redirect('detalle_reserva', reserva_id=reserva.id)
             
-        except ValueError as ve:
-            print(f"\n[✗✗✗] ERROR DE FORMATO: {type(ve).__name__}: {ve}")
+        except Exception as create_error:
+            print(f"█ [✗✗✗] ERROR AL CREAR: {type(create_error).__name__}: {create_error}", file=sys.stderr)
             import traceback
-            traceback.print_exc()
+            traceback.print_exc(file=sys.stderr)
+            logger.error(f"[CREAR_RESERVA] Error al crear: {create_error}", exc_info=True)
             return render(request, 'crear_reserva.html', {
-                'error': f'El formato de fecha u hora es incorrecto. Recibido: "{fecha_hora_str}". Por favor verifica.',
-                'doctores': doctores,
-                'especialidades': Doctor.SPECIALTIES,
-            })
-        except Doctor.DoesNotExist as de:
-            print(f"\n[✗✗✗] DOCTOR NO ENCONTRADO: {doctor_id}")
-            print(f"  - Detalles: {de}")
-            return render(request, 'crear_reserva.html', {
-                'error': 'El doctor seleccionado no es válido o no está disponible.',
-                'doctores': doctores,
-                'especialidades': Doctor.SPECIALTIES,
-            })
-        except Exception as e:
-            print(f"\n[✗✗✗] ERROR INESPERADO: {type(e).__name__}: {e}")
-            import traceback
-            traceback.print_exc()
-            return render(request, 'crear_reserva.html', {
-                'error': f'Ocurrió un error inesperado: {str(e)}',
+                'error': f'Error: {str(create_error)}',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })
     
-    # Carga inicial (GET)
-    print(f"\n[GET] Mostrando formulario vacío")
+    # ====================================================================================
+    # GET: MOSTRAR FORMULARIO
+    # ====================================================================================
+    print(f"\n█ [GET] Mostrando formulario vacío", file=sys.stderr)
     context = {
         'doctores': doctores,
         'paciente': paciente,
