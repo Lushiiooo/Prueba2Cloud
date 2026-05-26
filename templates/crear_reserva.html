@@ -81,6 +81,7 @@
                         <input 
                             type="date" 
                             id="fecha"
+                            name="fecha"
                             required
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-medical-blue transition"
                         >
@@ -93,6 +94,7 @@
                         <input 
                             type="time" 
                             id="hora"
+                            name="hora"
                             required
                             class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-medical-blue transition"
                         >
@@ -174,7 +176,9 @@ document.querySelector('form').addEventListener('submit', function(e) {
     
     if (fecha && hora) {
         // Format as "YYYY-MM-DD HH:MM" for Django DateTimeField
-        document.getElementById('fecha_hora').value = fecha + ' ' + hora;
+        const fechaHora = fecha + ' ' + hora;
+        document.getElementById('fecha_hora').value = fechaHora;
+        console.log('Fecha y hora combinadas:', fechaHora);
     } else {
         e.preventDefault();
         alert('Por favor, completa todos los campos requeridos.');

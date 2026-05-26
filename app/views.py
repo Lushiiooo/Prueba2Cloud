@@ -107,46 +107,73 @@ def crear_reserva(request):
         razon_consulta = request.POST.get('razon_consulta')
         
         # Validación: campos vacíos
-        if not doctor_id or not fecha_hora_str:
+        if not doctor_id or not fecha_hora_str or not razon_consulta:
             return render(request, 'crear_reserva.html', {
                 'error': 'Por favor completa todos los campos obligatorios.',
-                'doctores': doctores
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
             })
 
         try:
-            # 1. Limpieza de fecha: Convertir 'YYYY-MM-DDTHH:MM' a 'YYYY-MM-DD HH:MM'
-            # Esto soluciona el error de formato que tenías con PostgreSQL
-            fecha_limpia = fecha_hora_str.replace('T', ' ')
+            # 1. Parsear el datetime correctamente
+            # El formato enviado es "YYYY-MM-DD HH:MM" desde el JavaScript
+            fecha_dt = datetime.strptime(fecha_hora_str, '%Y-%m-%d %H:%M')
+            # Convertir a datetime consciente de zona horaria (usar la zona del proyecto)
+            fecha_dt = timezone.make_aware(fecha_dt)
             
             # 2. Obtener el doctor
             doctor = Doctor.objects.get(id=doctor_id, disponible=True)
             
             # 3. Validación de disponibilidad
-            if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_limpia).exists():
+            if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_dt).exists():
                 return render(request, 'crear_reserva.html', {
                     'error': 'El doctor no está disponible en ese horario.',
-                    'doctores': doctores
+                    'doctores': doctores,
+                    'especialidades': Doctor.SPECIALTIES,
                 })
             
-            # 4. Crear reserva manualmente (sin usar form.save() para evitar validaciones de admin)
+            # 4. Validación de fecha en el futuro
+            if fecha_dt <= timezone.now():
+                return render(request, 'crear_reserva.html', {
+                    'error': 'Por favor selecciona una fecha y hora en el futuro.',
+                    'doctores': doctores,
+                    'especialidades': Doctor.SPECIALTIES,
+                })
+            
+            # 5. Crear reserva manualmente (sin usar form.save() para evitar validaciones de admin)
             reserva = Reserva.objects.create(
                 paciente=paciente,
                 doctor=doctor,
-                fecha_hora=fecha_limpia,
+                fecha_hora=fecha_dt,
                 razon_consulta=razon_consulta,
                 estado='pendiente'
             )
             
-            # 5. Tarea en segundo plano
+            # 6. Tarea en segundo plano
             enviar_correo_reserva.delay(reserva.id)
             
             return redirect('detalle_reserva', reserva_id=reserva.id)
             
-        except Exception as e:
-            print(f"ERROR AL GUARDAR: {e}")
+        except ValueError as ve:
+            print(f"ERROR DE FORMATO: {ve}")
             return render(request, 'crear_reserva.html', {
-                'error': f'Ocurrió un error inesperado al procesar tu reserva.',
-                'doctores': doctores
+                'error': 'El formato de fecha u hora es incorrecto. Por favor verifica.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        except Doctor.DoesNotExist:
+            print(f"DOCTOR NO ENCONTRADO: {doctor_id}")
+            return render(request, 'crear_reserva.html', {
+                'error': 'El doctor seleccionado no es válido o no está disponible.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        except Exception as e:
+            print(f"ERROR AL GUARDAR: {type(e).__name__}: {e}")
+            return render(request, 'crear_reserva.html', {
+                'error': 'Ocurrió un error inesperado al procesar tu reserva.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
             })
     
     # Carga inicial (GET)
