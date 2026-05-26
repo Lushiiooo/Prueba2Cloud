@@ -153,6 +153,19 @@ def crear_reserva(request):
         fecha_hora_str = request.POST.get('fecha_hora', '').strip()
         razon_consulta = request.POST.get('razon_consulta', '').strip()
         
+        # FALLBACK: Si fecha_hora está vacío, intentar combinar fecha + hora
+        if not fecha_hora_str:
+            fecha_str = request.POST.get('fecha', '').strip()
+            hora_str = request.POST.get('hora', '').strip()
+            if fecha_str and hora_str:
+                fecha_hora_str = fecha_str + ' ' + hora_str
+                print(f"█ [FALLBACK] fecha_hora estaba vacío. Combinando fecha + hora: '{fecha_hora_str}'", file=sys.stderr)
+                logger.warning(f"[CREAR_RESERVA] Fallback: combinando fecha y hora: {fecha_hora_str}")
+            else:
+                print(f"█ [FALLBACK] fecha_hora vacío Y no se pudo combinar fecha + hora", file=sys.stderr)
+                print(f"█   fecha: '{fecha_str}'", file=sys.stderr)
+                print(f"█   hora: '{hora_str}'", file=sys.stderr)
+        
         # ====================================================================================
         # LOG CRÍTICO #4: MOSTRAR VALORES RECIBIDOS
         # ====================================================================================
