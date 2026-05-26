@@ -87,44 +87,59 @@ def detalle_reserva(request, reserva_id):
 
 @login_required
 def crear_reserva(request):
+    """Create a new reservation."""
     try:
         paciente = request.user.paciente_profile
     except Paciente.DoesNotExist:
         return redirect('index')
     
+    # 1. Mantenemos la forma original de obtener los doctores
+    doctores = Doctor.objects.filter(disponible=True)
+    
     if request.method == 'POST':
-        form = ReservaForm(request.POST)
+        # Mantenemos tu lógica original de extracción manual
+        doctor_id = request.POST.get('doctor_id')
+        fecha_hora_str = request.POST.get('fecha_hora')
+        razon_consulta = request.POST.get('razon_consulta')
         
-        if form.is_valid():
-            # commit=False nos permite modificar el objeto antes de guardarlo
-            reserva = form.save(commit=False)
+        try:
+            doctor = Doctor.objects.get(id=doctor_id, disponible=True)
             
-            # ASIGNAMOS EL PACIENTE QUE OBTUVIMOS ARRIBA
-            reserva.paciente = paciente
-            
-            # EL DOCTOR Y LA FECHA YA VIENEN EN 'form.cleaned_data'
-            # así que al hacer save() se guardarán correctamente.
-            
-            # Solo validamos disponibilidad (opcional pero recomendado)
-            if Reserva.objects.filter(doctor=reserva.doctor, fecha_hora=reserva.fecha_hora).exists():
-                context = {'error': 'El doctor no está disponible en ese horario.', 'form': form}
+            # Validar disponibilidad
+            if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_hora_str).exists():
+                context = {
+                    'error': 'El doctor no está disponible en ese horario.',
+                    'doctores': doctores, # Enviamos los doctores de nuevo aquí
+                }
                 return render(request, 'crear_reserva.html', context)
             
-            reserva.estado = 'pendiente'
-            reserva.save()
+            # Crear la reserva con tu lógica original
+            reserva = Reserva.objects.create(
+                paciente=paciente,
+                doctor=doctor,
+                fecha_hora=fecha_hora_str,
+                razon_consulta=razon_consulta,
+                estado='pendiente'
+            )
             
-            # Enviar tarea a Celery
             enviar_correo_reserva.delay(reserva.id)
             return redirect('detalle_reserva', reserva_id=reserva.id)
-        else:
-            # Aquí verás el error real si falta el doctor o la fecha
-            print(f"ERRORES DEL FORMULARIO: {form.errors}") 
-            context = {'form': form, 'error': 'Datos inválidos. Verifica el doctor y la fecha.'}
+        
+        except Exception as e:
+            print(f"ERROR: {e}")
+            context = {
+                'error': f'Error al crear la reserva: {str(e)}',
+                'doctores': doctores, # Y aquí también
+            }
             return render(request, 'crear_reserva.html', context)
     
-    context = {'form': ReservaForm()}
+    # 2. Contexto original para la carga inicial de la página
+    context = {
+        'paciente': paciente,
+        'doctores': doctores,
+        'especialidades': Doctor.SPECIALTIES,
+    }
     return render(request, 'crear_reserva.html', context)
-
 
 @login_required
 def cancelar_reserva(request, reserva_id):
