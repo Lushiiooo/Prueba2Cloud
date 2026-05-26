@@ -93,26 +93,33 @@ def crear_reserva(request):
         return redirect('index')
     
     if request.method == 'POST':
-        # USAMOS EL FORMULARIO PARA VALIDAR
         form = ReservaForm(request.POST)
         
         if form.is_valid():
+            # commit=False nos permite modificar el objeto antes de guardarlo
             reserva = form.save(commit=False)
+            
+            # ASIGNAMOS EL PACIENTE QUE OBTUVIMOS ARRIBA
             reserva.paciente = paciente
             
-            # Validar disponibilidad del doctor manualmente si es necesario
+            # EL DOCTOR Y LA FECHA YA VIENEN EN 'form.cleaned_data'
+            # así que al hacer save() se guardarán correctamente.
+            
+            # Solo validamos disponibilidad (opcional pero recomendado)
             if Reserva.objects.filter(doctor=reserva.doctor, fecha_hora=reserva.fecha_hora).exists():
                 context = {'error': 'El doctor no está disponible en ese horario.', 'form': form}
                 return render(request, 'crear_reserva.html', context)
             
             reserva.estado = 'pendiente'
             reserva.save()
+            
+            # Enviar tarea a Celery
             enviar_correo_reserva.delay(reserva.id)
             return redirect('detalle_reserva', reserva_id=reserva.id)
         else:
-            # ESTO MOSTRARÁ EL ERROR REAL EN LA CONSOLA DE DOCKER
+            # Aquí verás el error real si falta el doctor o la fecha
             print(f"ERRORES DEL FORMULARIO: {form.errors}") 
-            context = {'form': form, 'error': 'Datos inválidos, revisa el formato de fecha.'}
+            context = {'form': form, 'error': 'Datos inválidos. Verifica el doctor y la fecha.'}
             return render(request, 'crear_reserva.html', context)
     
     context = {'form': ReservaForm()}
