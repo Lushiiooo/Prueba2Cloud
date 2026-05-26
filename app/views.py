@@ -92,6 +92,14 @@ def crear_reserva(request):
     Vista para crear una nueva reserva de forma manual,
     evitando conflictos con las validaciones del ReservaForm de admin.
     """
+    # LOG INICIAL - VERIFICAR QUE LA VISTA SE EJECUTA
+    import sys
+    print("\n" + "="*80, file=sys.stderr)
+    print(f"[CREAR_RESERVA] VISTA EJECUTADA - Método: {request.method}", file=sys.stderr)
+    print(f"[CREAR_RESERVA] Ruta: {request.path}", file=sys.stderr)
+    print(f"[CREAR_RESERVA] Usuario: {request.user}", file=sys.stderr)
+    print("="*80, file=sys.stderr)
+    
     print("\n" + "="*80)
     print(f"[CREAR RESERVA] Método: {request.method}")
     print("="*80)

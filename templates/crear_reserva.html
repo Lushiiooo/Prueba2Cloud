@@ -30,7 +30,7 @@
             </div>
             {% endif %}
             
-            <form method="post" class="space-y-6">
+            <form method="post" action="{% url 'crear_reserva' %}" class="space-y-6">
                 {% csrf_token %}
                 
                 <!-- Doctor Selection -->
@@ -169,44 +169,72 @@
 </section>
 
 <script>
+// LOG INICIAL
+console.log('[FORM] Script cargado para crear_reserva');
+console.log('[FORM] URL del formulario:', document.querySelector('form').action);
+
 // Validar y combinar fecha y hora cuando se envía el formulario
 document.querySelector('form').addEventListener('submit', function(e) {
+    console.log('\n[FORM SUBMIT] ========== ENVÍO DEL FORMULARIO ==========');
+    
     const doctorId = document.getElementById('doctor_id').value.trim();
     const fecha = document.getElementById('fecha').value.trim();
     const hora = document.getElementById('hora').value.trim();
     const razonConsulta = document.getElementById('razon_consulta').value.trim();
     
+    console.log('[FORM DATA]');
+    console.log('  - doctor_id:', doctorId);
+    console.log('  - fecha:', fecha);
+    console.log('  - hora:', hora);
+    console.log('  - razon_consulta:', razonConsulta);
+    
     // Validar que todos los campos obligatorios estén presentes
     if (!doctorId) {
+        console.log('[VALIDACIÓN] ✗ Doctor ID vacío - BLOQUEANDO');
         e.preventDefault();
         alert('Por favor, selecciona un doctor.');
         return;
     }
+    console.log('[VALIDACIÓN] ✓ Doctor ID válido');
     
     if (!fecha) {
+        console.log('[VALIDACIÓN] ✗ Fecha vacía - BLOQUEANDO');
         e.preventDefault();
         alert('Por favor, selecciona una fecha.');
         return;
     }
+    console.log('[VALIDACIÓN] ✓ Fecha válida');
     
     if (!hora) {
+        console.log('[VALIDACIÓN] ✗ Hora vacía - BLOQUEANDO');
         e.preventDefault();
         alert('Por favor, selecciona una hora.');
         return;
     }
+    console.log('[VALIDACIÓN] ✓ Hora válida');
     
     if (!razonConsulta) {
+        console.log('[VALIDACIÓN] ✗ Razón vacía - BLOQUEANDO');
         e.preventDefault();
         alert('Por favor, ingresa la razón de la consulta.');
         return;
     }
+    console.log('[VALIDACIÓN] ✓ Razón válida');
     
     // Si todos están presentes, combinar fecha y hora
     const fechaHora = fecha + ' ' + hora;
     document.getElementById('fecha_hora').value = fechaHora;
-    console.log('Validación completada. Fecha y hora:', fechaHora);
-    console.log('Doctor ID:', doctorId);
-    console.log('Razón:', razonConsulta);
+    console.log('[COMBINADO] fecha_hora:', fechaHora);
+    console.log('[SUBMIT] ✓✓✓ Todos los campos válidos - Enviando formulario...');
+    console.log('[SUBMIT] URL destino:', this.action);
+    console.log('[SUBMIT] Método:', this.method);
+    
+    // Mostrar todo lo que se va a enviar
+    const formData = new FormData(this);
+    console.log('[SUBMIT] FormData a enviar:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`    - ${key}: ${value}`);
+    }
 });
 
 // Filtrar doctores por especialidad (opcional, mejora de UX)
