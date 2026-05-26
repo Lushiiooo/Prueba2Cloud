@@ -87,61 +87,35 @@ def detalle_reserva(request, reserva_id):
 
 @login_required
 def crear_reserva(request):
-    """Create a new reservation."""
     try:
         paciente = request.user.paciente_profile
     except Paciente.DoesNotExist:
         return redirect('index')
     
     if request.method == 'POST':
-        doctor_id = request.POST.get('doctor_id')
-        fecha_hora_str = request.POST.get('fecha_hora')
-        razon_consulta = request.POST.get('razon_consulta')
+        # USAMOS EL FORMULARIO PARA VALIDAR
+        form = ReservaForm(request.POST)
         
-        try:
-            doctor = Doctor.objects.get(id=doctor_id, disponible=True)
+        if form.is_valid():
+            reserva = form.save(commit=False)
+            reserva.paciente = paciente
             
-            # Validar que no haya otra reserva en el mismo horario para ese doctor
-            if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_hora_str).exists():
-                context = {
-                    'error': 'El doctor no está disponible en ese horario. Por favor, elige otro.',
-                    'doctores': Doctor.objects.filter(disponible=True),
-                }
+            # Validar disponibilidad del doctor manualmente si es necesario
+            if Reserva.objects.filter(doctor=reserva.doctor, fecha_hora=reserva.fecha_hora).exists():
+                context = {'error': 'El doctor no está disponible en ese horario.', 'form': form}
                 return render(request, 'crear_reserva.html', context)
             
-            # Crear la reserva
-            reserva = Reserva.objects.create(
-                paciente=paciente,
-                doctor=doctor,
-                fecha_hora=fecha_hora_str,
-                razon_consulta=razon_consulta,
-                estado='pendiente'
-            )
-            
-            # Trigger Celery task para enviar correo de confirmación
+            reserva.estado = 'pendiente'
+            reserva.save()
             enviar_correo_reserva.delay(reserva.id)
-            
             return redirect('detalle_reserva', reserva_id=reserva.id)
-        
-        except Doctor.DoesNotExist:
-            context = {
-                'error': 'El doctor seleccionado no está disponible.',
-                'doctores': Doctor.objects.filter(disponible=True),
-            }
-            return render(request, 'crear_reserva.html', context)
-        
-        except Exception as e:
-            context = {
-                'error': f'Error al crear la reserva: {str(e)}',
-                'doctores': Doctor.objects.filter(disponible=True),
-            }
+        else:
+            # ESTO MOSTRARÁ EL ERROR REAL EN LA CONSOLA DE DOCKER
+            print(f"ERRORES DEL FORMULARIO: {form.errors}") 
+            context = {'form': form, 'error': 'Datos inválidos, revisa el formato de fecha.'}
             return render(request, 'crear_reserva.html', context)
     
-    context = {
-        'paciente': paciente,
-        'doctores': Doctor.objects.filter(disponible=True),
-        'especialidades': Doctor.SPECIALTIES,
-    }
+    context = {'form': ReservaForm()}
     return render(request, 'crear_reserva.html', context)
 
 
