@@ -47,7 +47,7 @@ class ReservaWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reserva
         fields = ('id', 'paciente', 'doctor', 'fecha_hora', 'estado', 'notas', 'razon_consulta')
-        read_only_fields = ('id',)
+        read_only_fields = ('id', 'paciente')
 
     def validate_fecha_hora(self, value):
         from django.utils import timezone
