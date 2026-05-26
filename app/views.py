@@ -13,7 +13,7 @@ from django.urls import reverse_lazy
 from .models import Reserva, Paciente, Doctor
 from .forms import DoctorForm, PacienteEditForm, ReservaForm, RegistroForm
 from .tasks import enviar_correo_reserva
-from datetime import datatime
+from datetime import datetime
 
 
 def index(request):
