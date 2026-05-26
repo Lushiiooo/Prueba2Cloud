@@ -102,14 +102,34 @@ def crear_reserva(request):
     
     if request.method == 'POST':
         # Obtenemos los valores enviados por el formulario HTML
-        doctor_id = request.POST.get('doctor_id')
-        fecha_hora_str = request.POST.get('fecha_hora')
-        razon_consulta = request.POST.get('razon_consulta')
+        doctor_id = request.POST.get('doctor_id', '').strip()
+        fecha_hora_str = request.POST.get('fecha_hora', '').strip()
+        razon_consulta = request.POST.get('razon_consulta', '').strip()
+        
+        # DEBUG: Loguear los valores recibidos
+        print(f"DEBUG - Doctor ID: '{doctor_id}'")
+        print(f"DEBUG - Fecha Hora: '{fecha_hora_str}'")
+        print(f"DEBUG - Razón: '{razon_consulta}'")
+        print(f"DEBUG - POST data: {dict(request.POST)}")
         
         # Validación: campos vacíos
-        if not doctor_id or not fecha_hora_str or not razon_consulta:
+        if not doctor_id:
             return render(request, 'crear_reserva.html', {
-                'error': 'Por favor completa todos los campos obligatorios.',
+                'error': 'Por favor selecciona un doctor.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        
+        if not fecha_hora_str:
+            return render(request, 'crear_reserva.html', {
+                'error': 'Por favor completa la fecha y hora.',
+                'doctores': doctores,
+                'especialidades': Doctor.SPECIALTIES,
+            })
+        
+        if not razon_consulta:
+            return render(request, 'crear_reserva.html', {
+                'error': 'Por favor ingresa la razón de la consulta.',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })
@@ -117,17 +137,20 @@ def crear_reserva(request):
         try:
             # 1. Parsear el datetime correctamente
             # El formato enviado es "YYYY-MM-DD HH:MM" desde el JavaScript
+            print(f"DEBUG - Intentando parsear: '{fecha_hora_str}'")
             fecha_dt = datetime.strptime(fecha_hora_str, '%Y-%m-%d %H:%M')
             # Convertir a datetime consciente de zona horaria (usar la zona del proyecto)
             fecha_dt = timezone.make_aware(fecha_dt)
+            print(f"DEBUG - Fecha parseada: {fecha_dt}")
             
             # 2. Obtener el doctor
             doctor = Doctor.objects.get(id=doctor_id, disponible=True)
+            print(f"DEBUG - Doctor encontrado: {doctor}")
             
             # 3. Validación de disponibilidad
             if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_dt).exists():
                 return render(request, 'crear_reserva.html', {
-                    'error': 'El doctor no está disponible en ese horario.',
+                    'error': 'El doctor no está disponible en ese horario. Por favor selecciona otro.',
                     'doctores': doctores,
                     'especialidades': Doctor.SPECIALTIES,
                 })
@@ -148,6 +171,7 @@ def crear_reserva(request):
                 razon_consulta=razon_consulta,
                 estado='pendiente'
             )
+            print(f"DEBUG - Reserva creada: {reserva}")
             
             # 6. Tarea en segundo plano
             enviar_correo_reserva.delay(reserva.id)
@@ -155,9 +179,9 @@ def crear_reserva(request):
             return redirect('detalle_reserva', reserva_id=reserva.id)
             
         except ValueError as ve:
-            print(f"ERROR DE FORMATO: {ve}")
+            print(f"ERROR DE FORMATO: {type(ve).__name__}: {ve}")
             return render(request, 'crear_reserva.html', {
-                'error': 'El formato de fecha u hora es incorrecto. Por favor verifica.',
+                'error': f'El formato de fecha u hora es incorrecto. Recibido: "{fecha_hora_str}". Por favor verifica.',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })
@@ -170,8 +194,10 @@ def crear_reserva(request):
             })
         except Exception as e:
             print(f"ERROR AL GUARDAR: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return render(request, 'crear_reserva.html', {
-                'error': 'Ocurrió un error inesperado al procesar tu reserva.',
+                'error': f'Ocurrió un error inesperado: {str(e)}',
                 'doctores': doctores,
                 'especialidades': Doctor.SPECIALTIES,
             })

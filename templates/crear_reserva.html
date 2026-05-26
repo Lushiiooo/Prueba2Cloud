@@ -169,20 +169,44 @@
 </section>
 
 <script>
-// Combinar fecha y hora cuando se envía el formulario
+// Validar y combinar fecha y hora cuando se envía el formulario
 document.querySelector('form').addEventListener('submit', function(e) {
-    const fecha = document.getElementById('fecha').value;
-    const hora = document.getElementById('hora').value;
+    const doctorId = document.getElementById('doctor_id').value.trim();
+    const fecha = document.getElementById('fecha').value.trim();
+    const hora = document.getElementById('hora').value.trim();
+    const razonConsulta = document.getElementById('razon_consulta').value.trim();
     
-    if (fecha && hora) {
-        // Format as "YYYY-MM-DD HH:MM" for Django DateTimeField
-        const fechaHora = fecha + ' ' + hora;
-        document.getElementById('fecha_hora').value = fechaHora;
-        console.log('Fecha y hora combinadas:', fechaHora);
-    } else {
+    // Validar que todos los campos obligatorios estén presentes
+    if (!doctorId) {
         e.preventDefault();
-        alert('Por favor, completa todos los campos requeridos.');
+        alert('Por favor, selecciona un doctor.');
+        return;
     }
+    
+    if (!fecha) {
+        e.preventDefault();
+        alert('Por favor, selecciona una fecha.');
+        return;
+    }
+    
+    if (!hora) {
+        e.preventDefault();
+        alert('Por favor, selecciona una hora.');
+        return;
+    }
+    
+    if (!razonConsulta) {
+        e.preventDefault();
+        alert('Por favor, ingresa la razón de la consulta.');
+        return;
+    }
+    
+    // Si todos están presentes, combinar fecha y hora
+    const fechaHora = fecha + ' ' + hora;
+    document.getElementById('fecha_hora').value = fechaHora;
+    console.log('Validación completada. Fecha y hora:', fechaHora);
+    console.log('Doctor ID:', doctorId);
+    console.log('Razón:', razonConsulta);
 });
 
 // Filtrar doctores por especialidad (opcional, mejora de UX)
