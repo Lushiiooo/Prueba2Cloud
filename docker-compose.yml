@@ -32,20 +32,17 @@ services:
   web:
     build: .
     container_name: medical_web
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+    command: gunicorn medicalreserva.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     environment:
-      DEBUG: "True"
-      DB_NAME: "medical_reserva"
-      DB_USER: "medical_user"
-      DB_PASSWORD: "medical_secure_pwd_2024"
-      DB_HOST: "db"
-      DB_PORT: "5432"
+      DEBUG: "${DEBUG}"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_HOST: "${DB_HOST}"
       REDIS_URL: "redis://redis:6379/0"
       SECRET_KEY: "django-insecure-dev-key-only-for-local-development"
     depends_on:
