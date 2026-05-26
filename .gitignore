@@ -99,23 +99,21 @@ celerybeat.pid
 # Environments
 .env
 
-# Test / verification scripts and docs (local only)
-# Shell scripts used for quick tests or verification
+# ==================== DOCUMENTACIÓN Y SCRIPTS LOCALES ====================
+# Ignorar todos los archivos Markdown de documentación
+*.md
+!README.md  # Mantiene el README por si decides documentar el repo oficial
+
+# Archivos de entorno (Seguridad estricta)
+.env
+.env.*
+!.env.example # Permite subir la plantilla vacía para que otros sepan qué variables usar
+
+# Scripts locales y snippets temporales
 test_api.sh
 verify_crudcomplete.sh
-# Generated or verification markdown files
-CRUDCOMPLETO.md
-RESUMEN_CRUDCOMPLETO.md
-API_ENDPOINTS.md
-.env.local
-.env.production
-.env.*.local
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+local_*.sh
+TEMPLATES_SNIPPETS.html
 
 # Spyder project settings
 .spyderproject
