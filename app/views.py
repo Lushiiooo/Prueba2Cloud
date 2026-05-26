@@ -89,46 +89,46 @@ def detalle_reserva(request, reserva_id):
 @login_required
 def crear_reserva(request):
     """
-    Vista para crear una nueva reserva.
-    Maneja la recepción de datos, validación de formato de fecha 
-    y asignación de relaciones.
+    Vista para crear una nueva reserva de forma manual,
+    evitando conflictos con las validaciones del ReservaForm de admin.
     """
     try:
         paciente = request.user.paciente_profile
     except Paciente.DoesNotExist:
-        # Si el usuario no tiene perfil de paciente, redirige a algún lugar seguro
         return redirect('index')
     
-    # Obtenemos los doctores disponibles para el select en el HTML
+    # Obtener doctores disponibles para el select en el HTML
     doctores = Doctor.objects.filter(disponible=True)
     
     if request.method == 'POST':
-        # Obtenemos los valores desde el POST
+        # Obtenemos los valores enviados por el formulario HTML
         doctor_id = request.POST.get('doctor_id')
-        fecha_hora_str = request.POST.get('fecha_hora') # Viene de <input type="datetime-local">
+        fecha_hora_str = request.POST.get('fecha_hora')
         razon_consulta = request.POST.get('razon_consulta')
         
-        # DEBUG: Mira qué llega al servidor
-        print(f"DEBUG: Doctor={doctor_id}, Fecha='{fecha_hora_str}', Razon={razon_consulta}")
-        
-        # Validación básica de presencia de datos
+        # Validación: campos vacíos
         if not doctor_id or not fecha_hora_str:
-            context = {'error': 'Por favor completa todos los campos.', 'doctores': doctores}
-            return render(request, 'crear_reserva.html', context)
+            return render(request, 'crear_reserva.html', {
+                'error': 'Por favor completa todos los campos obligatorios.',
+                'doctores': doctores
+            })
 
         try:
-            # 1. Limpieza de formato de fecha (Convierte '2026-05-30T14:30' a '2026-05-30 14:30')
+            # 1. Limpieza de fecha: Convertir 'YYYY-MM-DDTHH:MM' a 'YYYY-MM-DD HH:MM'
+            # Esto soluciona el error de formato que tenías con PostgreSQL
             fecha_limpia = fecha_hora_str.replace('T', ' ')
             
-            # 2. Obtención del doctor
+            # 2. Obtener el doctor
             doctor = Doctor.objects.get(id=doctor_id, disponible=True)
             
-            # 3. Validación de duplicados (opcional)
+            # 3. Validación de disponibilidad
             if Reserva.objects.filter(doctor=doctor, fecha_hora=fecha_limpia).exists():
-                context = {'error': 'El doctor ya tiene una reserva en ese horario.', 'doctores': doctores}
-                return render(request, 'crear_reserva.html', context)
+                return render(request, 'crear_reserva.html', {
+                    'error': 'El doctor no está disponible en ese horario.',
+                    'doctores': doctores
+                })
             
-            # 4. Creación del objeto
+            # 4. Crear reserva manualmente (sin usar form.save() para evitar validaciones de admin)
             reserva = Reserva.objects.create(
                 paciente=paciente,
                 doctor=doctor,
@@ -144,12 +144,16 @@ def crear_reserva(request):
             
         except Exception as e:
             print(f"ERROR AL GUARDAR: {e}")
-            context = {'error': f'Error al guardar: {str(e)}', 'doctores': doctores}
-            return render(request, 'crear_reserva.html', context)
+            return render(request, 'crear_reserva.html', {
+                'error': f'Ocurrió un error inesperado al procesar tu reserva.',
+                'doctores': doctores
+            })
     
-    # Carga inicial de la página
+    # Carga inicial (GET)
     context = {
         'doctores': doctores,
+        'paciente': paciente,
+        'especialidades': Doctor.SPECIALTIES,
     }
     return render(request, 'crear_reserva.html', context)
 

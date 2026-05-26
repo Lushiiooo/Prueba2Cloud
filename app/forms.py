@@ -109,6 +109,17 @@ class PacienteEditForm(forms.ModelForm):
             paciente.save()
         return paciente
 
+class ReservaPacienteForm(forms.ModelForm):
+    """Formulario simplificado para que el paciente cree su propia reserva."""
+    class Meta:
+        model = Reserva
+        fields = ['doctor', 'fecha_hora', 'razon_consulta']
+        widgets = {
+            'doctor': forms.Select(attrs={'class': 'w-full px-4 py-2 border rounded-lg'}),
+            'fecha_hora': forms.DateTimeInput(attrs={'class': 'w-full px-4 py-2 border rounded-lg', 'type': 'datetime-local'}),
+            'razon_consulta': forms.TextInput(attrs={'class': 'w-full px-4 py-2 border rounded-lg'}),
+        }
+
 
 class ReservaForm(forms.ModelForm):
     """Form for creating and updating reservations (Admin only)."""
