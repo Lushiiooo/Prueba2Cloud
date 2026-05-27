@@ -23,7 +23,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'backup-multicloud-diario': {
         'task': 'app.tasks.backup_multicloud_task',
-        'schedule': crontab('hour=0', minute='*/1'),  # Medianoche todos los días
+        'schedule': crontab(minute='*/1'),  # Medianoche todos los días
         'options': {'queue': 'default', 'expires': 300}
     },
     'recordatorio-reserva-proxima': {
