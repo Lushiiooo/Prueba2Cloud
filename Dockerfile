@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     zlib1g-dev \
     netcat-openbsd \
+    azure-cli \
     && rm -rf /var/lib/apt/lists/*
 
 # Copia el archivo de requisitos
