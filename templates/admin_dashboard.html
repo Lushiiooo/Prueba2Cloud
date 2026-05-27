@@ -220,7 +220,7 @@
         errorDiv.style.display = 'none';
 
         // 1. Fetch corregido con CSRF Token y POST
-        fetch('{% url "generar_reporte" %}', {
+        fetch('/reportes/generar-reporte/', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',
@@ -232,64 +232,26 @@
             if (data.status === 'processing') {
                 verificarEstadoReporte(data.task_id);
             } else {
-                mostrarError(data.message || 'Error al iniciar la generación del reporte');
-                btn.disabled = false;
+                mostrarError(data.message || 'Error al iniciar la generación');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            mostrarError('Error de conexión al servidor');
-            btn.disabled = false;
         });
     }
 
-    function verificarEstadoReporte(taskId, intentos = 0) {
-        const maxIntentos = 120;
-        const intervalo = 1000;
-
-        if (intentos >= maxIntentos) {
-            mostrarError('La generación del reporte tardó demasiado tiempo');
-            return;
-        }
-
-        setTimeout(() => {
-            // 2. URL corregida usando el tag {% url %} para que apunte a /reportes/...
-            fetch('{% url "verificar_reporte" "0" %}'.replace('0', taskId))
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        document.getElementById('reporte-processing').style.display = 'none';
-                        document.getElementById('reporte-success').style.display = 'flex';
-
-                        setTimeout(() => {
-                            descargarReporte(data.filename);
-                            document.getElementById('generar-reporte-btn').disabled = false;
-                        }, 1000);
-                    } else if (data.status === 'error') {
-                        mostrarError(data.message || 'Error al generar el reporte');
-                    } else {
-                        verificarEstadoReporte(taskId, intentos + 1);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    mostrarError('Error al verificar el estado del reporte');
-                });
-        }, intervalo);
+    function verificarEstadoReporte(taskId) {
+        // Concatenamos el ID directamente en la URL
+        fetch(`/reportes/verificar-reporte/${taskId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    descargarReporte(data.filename);
+                } else if (data.status === 'processing') {
+                    setTimeout(() => verificarEstadoReporte(taskId), 1000);
+                }
+            });
     }
 
     function descargarReporte(filename) {
-        // 3. URL corregida dinámicamente
-        const url = '{% url "descargar_reporte" "temp_file" %}'.replace('temp_file', filename);
-        window.location.href = url;
-    }
-
-    function mostrarError(mensaje) {
-        document.getElementById('reporte-processing').style.display = 'none';
-        document.getElementById('reporte-success').style.display = 'none';
-        document.getElementById('reporte-error').style.display = 'flex';
-        document.getElementById('error-message').textContent = mensaje;
-        document.getElementById('generar-reporte-btn').disabled = false;
+        window.location.href = `/reportes/descargar-reporte/${filename}/`;
     }
 </script>
 {% endblock %}

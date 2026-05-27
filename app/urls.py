@@ -62,3 +62,4 @@ urlpatterns = [
     path('reportes/verificar-reporte/<str:task_id>/', views.verificar_reporte, name='verificar_reporte'),
     path('reportes/descargar-reporte/<str:filename>/', views.descargar_reporte, name='descargar_reporte'),
 ]
+
