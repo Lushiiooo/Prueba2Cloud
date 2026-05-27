@@ -58,7 +58,7 @@ urlpatterns = [
     path('admin-reserva/<int:reserva_id>/cancelar/', views.admin_reserva_cancelar, name='admin_reserva_cancelar'),
     
     # Reporte mensuales
-    path('admin/generar-reporte/', views.generar_reporte, name='generar_reporte'),
-    path('admin/verificar-reporte/<str:task_id>/', views.verificar_reporte, name='verificar_reporte'),
-    path('admin/descargar-reporte/<str:filename>/', views.descargar_reporte, name='descargar_reporte'),
+    path('reportes/generar-reporte/', views.generar_reporte, name='generar_reporte'),
+    path('reportes/verificar-reporte/<str:task_id>/', views.verificar_reporte, name='verificar_reporte'),
+    path('reportes/descargar-reporte/<str:filename>/', views.descargar_reporte, name='descargar_reporte'),
 ]

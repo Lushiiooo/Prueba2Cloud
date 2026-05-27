@@ -213,35 +213,39 @@
         const successDiv = document.getElementById('reporte-success');
         const errorDiv = document.getElementById('reporte-error');
 
-        // Desactivar botón y mostrar estado de procesamiento
         btn.disabled = true;
         statusDiv.style.display = 'block';
         processingDiv.style.display = 'flex';
         successDiv.style.display = 'none';
         errorDiv.style.display = 'none';
 
-        // Llamar al endpoint para generar el reporte
-        fetch('{% url "generar_reporte" %}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'processing') {
-                    // Empezar a verificar el estado de la tarea
-                    verificarEstadoReporte(data.task_id);
-                } else {
-                    mostrarError('Error al iniciar la generación del reporte');
-                    btn.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mostrarError('Error de conexión al servidor');
+        // 1. Fetch corregido con CSRF Token y POST
+        fetch('{% url "generar_reporte" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'processing') {
+                verificarEstadoReporte(data.task_id);
+            } else {
+                mostrarError(data.message || 'Error al iniciar la generación del reporte');
                 btn.disabled = false;
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarError('Error de conexión al servidor');
+            btn.disabled = false;
+        });
     }
 
     function verificarEstadoReporte(taskId, intentos = 0) {
-        const maxIntentos = 120; // Máximo 2 minutos de espera
-        const intervalo = 1000; // Verificar cada 1 segundo
+        const maxIntentos = 120;
+        const intervalo = 1000;
 
         if (intentos >= maxIntentos) {
             mostrarError('La generación del reporte tardó demasiado tiempo');
@@ -249,24 +253,21 @@
         }
 
         setTimeout(() => {
-            fetch(`/admin/verificar-reporte/${taskId}/`)
+            // 2. URL corregida usando el tag {% url %} para que apunte a /reportes/...
+            fetch('{% url "verificar_reporte" "0" %}'.replace('0', taskId))
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        // Mostrar mensaje de éxito
                         document.getElementById('reporte-processing').style.display = 'none';
                         document.getElementById('reporte-success').style.display = 'flex';
 
-                        // Descargar el archivo después de 1 segundo
                         setTimeout(() => {
                             descargarReporte(data.filename);
-                            // Reactivar botón después de la descarga
                             document.getElementById('generar-reporte-btn').disabled = false;
                         }, 1000);
                     } else if (data.status === 'error') {
                         mostrarError(data.message || 'Error al generar el reporte');
                     } else {
-                        // Seguir verificando
                         verificarEstadoReporte(taskId, intentos + 1);
                     }
                 })
@@ -278,13 +279,9 @@
     }
 
     function descargarReporte(filename) {
-        // Crear un enlace temporal y descargarlo
-        const link = document.createElement('a');
-        link.href = `/admin/descargar-reporte/${filename}/`;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // 3. URL corregida dinámicamente
+        const url = '{% url "descargar_reporte" "temp_file" %}'.replace('temp_file', filename);
+        window.location.href = url;
     }
 
     function mostrarError(mensaje) {
