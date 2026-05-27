@@ -22,48 +22,79 @@ def enviar_correo_reserva(self, reserva_id):
     from django.utils.html import strip_tags
     from app.models import Reserva
 
-    reserva = Reserva.objects.select_related(
-        'paciente__usuario',
-        'doctor'
-    ).get(id=reserva_id)
+    try:
+        # Validar que la API key esté configurada
+        api_key = settings.RESEND_API_KEY
+        if not api_key:
+            logger.error(f"[RESEND ERROR] RESEND_API_KEY no está configurada")
+            return {
+                "status": "error",
+                "message": "RESEND_API_KEY no está configurada"
+            }
 
-    paciente = reserva.paciente
-    doctor = reserva.doctor
-    usuario = paciente.usuario
+        reserva = Reserva.objects.select_related(
+            'paciente__usuario',
+            'doctor'
+        ).get(id=reserva_id)
 
-    email_destino = usuario.email
+        paciente = reserva.paciente
+        doctor = reserva.doctor
+        usuario = paciente.usuario
 
-    context = {
-        'nombre_paciente': usuario.get_full_name(),
-        'reserva_id': reserva.id,
-        'doctor_nombre': doctor.nombre,
-        'especialidad': doctor.get_especialidad_display(),
-        'fecha_hora': reserva.fecha_hora.strftime('%d/%m/%Y %H:%M'),
-        'razon_consulta': reserva.razon_consulta,
-        'estado': reserva.get_estado_display(),
-    }
+        email_destino = usuario.email
 
-    html_body = render_to_string(
-        'emails/confirmacion_reserva.html',
-        context
-    )
+        logger.info(f"[RESEND] Preparando correo para la reserva #{reserva.id}")
+        logger.info(f"[RESEND] Email destino: {email_destino}")
+        logger.info(f"[RESEND] From: {settings.RESEND_FROM_EMAIL}")
 
-    text_body = strip_tags(html_body)
+        context = {
+            'nombre_paciente': usuario.get_full_name(),
+            'reserva_id': reserva.id,
+            'doctor_nombre': doctor.nombre,
+            'especialidad': doctor.get_especialidad_display(),
+            'fecha_hora': reserva.fecha_hora.strftime('%d/%m/%Y %H:%M'),
+            'razon_consulta': reserva.razon_consulta,
+            'estado': reserva.get_estado_display(),
+        }
 
-    resend.api_key = settings.RESEND_API_KEY
+        html_body = render_to_string(
+            'emails/confirmacion_reserva.html',
+            context
+        )
 
-    response = resend.Emails.send({
-        "from": settings.RESEND_FROM_EMAIL,
-        "to": [email_destino],
-        "subject": f"Reserva #{reserva.id} confirmada",
-        "html": html_body,
-        "text": text_body,
-    })
+        text_body = strip_tags(html_body)
 
-    return {
-        "status": "enviado",
-        "resend_id": response.get("id")
-    }
+        resend.api_key = api_key
+
+        logger.info(f"[RESEND] Enviando correo con Resend API...")
+
+        response = resend.Emails.send({
+            "from": settings.RESEND_FROM_EMAIL,
+            "to": [email_destino],
+            "subject": f"Reserva #{reserva.id} confirmada",
+            "html": html_body,
+            "text": text_body,
+        })
+
+        logger.info(f"[RESEND] Respuesta: {response}")
+
+        if response.get("id"):
+            logger.info(f"[RESEND] Correo enviado exitosamente. ID: {response.get('id')}")
+            return {
+                "status": "enviado",
+                "resend_id": response.get("id")
+            }
+        else:
+            error_msg = response.get("message", "Error desconocido")
+            logger.error(f"[RESEND ERROR] {error_msg}")
+            return {
+                "status": "error",
+                "message": error_msg
+            }
+
+    except Exception as e:
+        logger.error(f"[RESEND ERROR] Excepción al enviar correo para reserva #{reserva_id}: {str(e)}", exc_info=True)
+        raise self.retry(exc=e, countdown=30, max_retries=3)
 
 
 @shared_task

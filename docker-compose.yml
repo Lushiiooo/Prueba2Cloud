@@ -54,6 +54,12 @@ services:
       redis:
         condition: service_healthy
 
+  celery_worker:
+    build: .
+    container_name: medical_celery
+    command: celery -A medicalreserva worker -l info
+    volumes:
+      - .:/app
     environment:
       DEBUG: "${DEBUG}"
       DB_NAME: "${DB_NAME}"
