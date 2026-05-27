@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Confirmación Reserva</title>
+</head>
+<body>
+
+<h2>Reserva Confirmada</h2>
+
+<p>Hola {{ nombre_paciente }},</p>
+
+<p>Tu reserva médica fue registrada correctamente.</p>
+
+<ul>
+    <li>ID: {{ reserva_id }}</li>
+    <li>Doctor: {{ doctor_nombre }}</li>
+    <li>Especialidad: {{ especialidad }}</li>
+    <li>Fecha: {{ fecha_hora }}</li>
+    <li>Motivo: {{ razon_consulta }}</li>
+    <li>Estado: {{ estado }}</li>
+</ul>
+
+<p>Gracias por usar Medical Reserva.</p>
+</body>
+</html>

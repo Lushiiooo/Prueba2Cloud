@@ -8,71 +8,62 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_kwargs={'max_retries': 3, 'countdown': 30},
+    name='app.tasks.enviar_correo_reserva',
+)
 def enviar_correo_reserva(self, reserva_id):
-    """
-    Simula el envío de un correo de confirmación de reserva.
-    En producción, aquí usarías un servicio de email real (SendGrid, AWS SES, etc.)
-    """
+
+    import resend
+    from django.conf import settings
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
     from app.models import Reserva
-    
-    try:
-        reserva = Reserva.objects.get(id=reserva_id)
-        
-        # Simular envío de correo (en producción aquí usarías django.core.mail.send_mail)
-        mensaje = f"""
-        ╔════════════════════════════════════════════════════════════════╗
-        ║                   CONFIRMACIÓN DE RESERVA MÉDICA               ║
-        ╚════════════════════════════════════════════════════════════════╝
-        
-        Estimado/a {reserva.paciente.usuario.get_full_name()},
-        
-        Su reserva ha sido registrada correctamente en el sistema.
-        
-        📋 DETALLES DE LA RESERVA:
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        • ID de Reserva: #{reserva.id}
-        • Doctor: Dr. {reserva.doctor.nombre}
-        • Especialidad: {reserva.doctor.get_especialidad_display()}
-        • Fecha y Hora: {reserva.fecha_hora.strftime('%d/%m/%Y %H:%M')}
-        • Razón de la Consulta: {reserva.razon_consulta}
-        • Estado: {reserva.get_estado_display()}
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
-        ⏰ RECORDATORIOS IMPORTANTES:
-        • Por favor, llegar 10 minutos antes de la cita
-        • Llevar su documento de identidad
-        • En caso de cambios, notificar con 24 horas de anticipación
-        
-        📞 ¿NECESITAS AYUDA?
-        Para cambios o cancelaciones, contacta al: +1-800-MEDICAL
-        O responde este correo directamente.
-        
-        ¡Esperamos brindarte la mejor atención!
-        
-        Medical Reserva Platform 🏥
-        """
-        
-        logger.info(f"[CELERY TASK] Tarea enviando correo para la reserva #{reserva.id}")
-        logger.info(f"[CORREO ENVIADO A] {reserva.paciente.usuario.email}")
-        print(mensaje)
-        
-        return {
-            'status': 'success',
-            'message': f'Correo enviado para la reserva #{reserva.id}',
-            'timestamp': timezone.now().isoformat()
-        }
-    
-    except Reserva.DoesNotExist:
-        logger.error(f"[CELERY ERROR] Reserva #{reserva_id} no encontrada")
-        return {
-            'status': 'error',
-            'message': f'Reserva #{reserva_id} no encontrada'
-        }
-    
-    except Exception as e:
-        logger.error(f"[CELERY ERROR] Error al enviar correo para la reserva #{reserva_id}: {str(e)}")
-        self.retry(exc=e, countdown=60, max_retries=3)
+
+    reserva = Reserva.objects.select_related(
+        'paciente__usuario',
+        'doctor'
+    ).get(id=reserva_id)
+
+    paciente = reserva.paciente
+    doctor = reserva.doctor
+    usuario = paciente.usuario
+
+    email_destino = usuario.email
+
+    context = {
+        'nombre_paciente': usuario.get_full_name(),
+        'reserva_id': reserva.id,
+        'doctor_nombre': doctor.nombre,
+        'especialidad': doctor.get_especialidad_display(),
+        'fecha_hora': reserva.fecha_hora.strftime('%d/%m/%Y %H:%M'),
+        'razon_consulta': reserva.razon_consulta,
+        'estado': reserva.get_estado_display(),
+    }
+
+    html_body = render_to_string(
+        'emails/confirmacion_reserva.html',
+        context
+    )
+
+    text_body = strip_tags(html_body)
+
+    resend.api_key = settings.RESEND_API_KEY
+
+    response = resend.Emails.send({
+        "from": settings.RESEND_FROM_EMAIL,
+        "to": [email_destino],
+        "subject": f"Reserva #{reserva.id} confirmada",
+        "html": html_body,
+        "text": text_body,
+    })
+
+    return {
+        "status": "enviado",
+        "resend_id": response.get("id")
+    }
 
 
 @shared_task
