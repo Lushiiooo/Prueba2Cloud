@@ -56,4 +56,9 @@ urlpatterns = [
     path('admin-reserva/<int:reserva_id>/confirmar/', views.admin_reserva_confirmar, name='admin_reserva_confirmar'),
     path('admin-reserva/<int:reserva_id>/completar/', views.admin_reserva_completar, name='admin_reserva_completar'),
     path('admin-reserva/<int:reserva_id>/cancelar/', views.admin_reserva_cancelar, name='admin_reserva_cancelar'),
+    
+    # Reporte mensuales
+    path('admin/generar-reporte/', views.generar_reporte, name='generar_reporte'),
+    path('admin/verificar-reporte/<str:task_id>/', views.verificar_reporte, name='verificar_reporte'),
+    path('admin/descargar-reporte/<str:filename>/', views.descargar_reporte, name='descargar_reporte'),
 ]

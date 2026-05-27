@@ -10,9 +10,13 @@ from django.contrib.auth import authenticate, login
 from django.utils import timezone
 from django.db.models import Q
 from django.urls import reverse_lazy
+from django.http import JsonResponse, FileResponse
 from .models import Reserva, Paciente, Doctor
 from .forms import DoctorForm, PacienteEditForm, ReservaForm, RegistroForm
+from .tasks import generar_reporte_mensual
 from datetime import datetime
+import os
+import mimetypes
 
 
 def index(request):
@@ -412,6 +416,112 @@ def admin_dashboard(request):
         'doctores_no_disponibles': Doctor.objects.filter(disponible=False).count(),
     }
     return render(request, 'admin_dashboard.html', context)
+
+
+@login_required
+def generar_reporte(request):
+    """
+    API endpoint que dispara la tarea de Celery para generar el reporte mensual.
+    Retorna JSON con el task_id para hacer polling del estado.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': 'No tienes permisos'}, status=403)
+    
+    try:
+        # Disparar la tarea de Celery
+        task = generar_reporte_mensual.delay()
+        
+        return JsonResponse({
+            'status': 'processing',
+            'task_id': task.id,
+            'message': 'Generando reporte...'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+
+@login_required
+def verificar_reporte(request, task_id):
+    """
+    Verifica el estado de la tarea de Celery.
+    Retorna JSON con el estado actual.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': 'No tienes permisos'}, status=403)
+    
+    from celery.result import AsyncResult
+    
+    try:
+        task_result = AsyncResult(task_id)
+        
+        if task_result.state == 'PENDING':
+            response = {
+                'status': 'processing',
+                'message': 'La tarea está en cola...'
+            }
+        elif task_result.state == 'SUCCESS':
+            result = task_result.result
+            response = {
+                'status': 'success',
+                'message': result.get('message', 'Reporte generado exitosamente'),
+                'filename': result.get('filename'),
+                'task_id': task_id
+            }
+        elif task_result.state == 'FAILURE':
+            response = {
+                'status': 'error',
+                'message': 'Error al generar el reporte',
+                'error': str(task_result.info)
+            }
+        else:
+            response = {
+                'status': 'processing',
+                'message': f'Estado: {task_result.state}'
+            }
+        
+        return JsonResponse(response)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+
+@login_required
+def descargar_reporte(request, filename):
+    """
+    Descarga el archivo del reporte generado.
+    """
+    if not request.user.is_staff and not request.user.is_superuser:
+        return JsonResponse({'status': 'error', 'message': 'No tienes permisos'}, status=403)
+    
+    try:
+        filepath = os.path.join('temp', filename)
+        
+        # Validar que el archivo existe y está en el directorio permitido
+        if not os.path.exists(filepath):
+            return JsonResponse({'status': 'error', 'message': 'Archivo no encontrado'}, status=404)
+        
+        # Verificar que el path no intenta escapar del directorio temp
+        real_path = os.path.realpath(filepath)
+        base_path = os.path.realpath('temp')
+        if not real_path.startswith(base_path):
+            return JsonResponse({'status': 'error', 'message': 'Acceso denegado'}, status=403)
+        
+        # Abrir y enviar el archivo
+        response = FileResponse(open(filepath, 'rb'))
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Type'] = 'application/pdf'
+        
+        return response
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 
 @login_required

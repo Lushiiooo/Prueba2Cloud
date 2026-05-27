@@ -122,7 +122,7 @@
     </div>
 
     <!-- Botones de Acción Rápida -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <a href="{% url 'admin_doctores' %}" class="bg-white rounded-lg shadow-md p-6 card-hover text-center hover:shadow-lg transition">
             <div class="text-4xl text-medical-blue mb-3">
                 <i class="fas fa-user-md"></i>
@@ -155,5 +155,144 @@
             <p class="text-sm text-gray-600">Salir del panel de admin</p>
         </a>
     </div>
+
+    <!-- Sección de Reportes -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-8 border border-blue-200">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">
+            <i class="fas fa-file-pdf text-red-500 mr-2"></i>Generar Reportes
+        </h2>
+        <p class="text-gray-600 mb-6">Genera documentos clínicos necesarios para la clínica</p>
+
+        <!-- Tarjeta del Reporte Mensual -->
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">
+                        <i class="fas fa-chart-bar text-blue-500 mr-2"></i>Reporte Mensual de Reservas
+                    </h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Documento que contiene estadísticas completas del mes actual: total de reservas, 
+                        estados, doctores disponibles, pacientes registrados y detalle de citas.
+                    </p>
+                    
+                    <!-- Mensajes de estado -->
+                    <div id="reporte-status" class="mb-4" style="display: none;">
+                        <div id="reporte-processing" class="flex items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg" style="display: none;">
+                            <i class="fas fa-spinner fa-spin text-yellow-600 mr-3"></i>
+                            <span class="text-yellow-800">Generando reporte...</span>
+                        </div>
+                        <div id="reporte-success" class="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg" style="display: none;">
+                            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                            <span class="text-green-800">¡Reporte generado exitosamente! Descargando...</span>
+                        </div>
+                        <div id="reporte-error" class="flex items-center p-3 bg-red-50 border border-red-200 rounded-lg" style="display: none;">
+                            <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
+                            <span id="error-message" class="text-red-800"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button 
+                    id="generar-reporte-btn"
+                    onclick="generarReporte()"
+                    class="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 px-6 rounded-lg transition transform hover:scale-105 active:scale-95"
+                >
+                    <i class="fas fa-download mr-2"></i>Generar Reporte
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Script para generar reportes -->
+<script>
+    function generarReporte() {
+        const btn = document.getElementById('generar-reporte-btn');
+        const statusDiv = document.getElementById('reporte-status');
+        const processingDiv = document.getElementById('reporte-processing');
+        const successDiv = document.getElementById('reporte-success');
+        const errorDiv = document.getElementById('reporte-error');
+
+        // Desactivar botón y mostrar estado de procesamiento
+        btn.disabled = true;
+        statusDiv.style.display = 'block';
+        processingDiv.style.display = 'flex';
+        successDiv.style.display = 'none';
+        errorDiv.style.display = 'none';
+
+        // Llamar al endpoint para generar el reporte
+        fetch('{% url "generar_reporte" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'processing') {
+                    // Empezar a verificar el estado de la tarea
+                    verificarEstadoReporte(data.task_id);
+                } else {
+                    mostrarError('Error al iniciar la generación del reporte');
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarError('Error de conexión al servidor');
+                btn.disabled = false;
+            });
+    }
+
+    function verificarEstadoReporte(taskId, intentos = 0) {
+        const maxIntentos = 120; // Máximo 2 minutos de espera
+        const intervalo = 1000; // Verificar cada 1 segundo
+
+        if (intentos >= maxIntentos) {
+            mostrarError('La generación del reporte tardó demasiado tiempo');
+            return;
+        }
+
+        setTimeout(() => {
+            fetch(`/admin/verificar-reporte/${taskId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Mostrar mensaje de éxito
+                        document.getElementById('reporte-processing').style.display = 'none';
+                        document.getElementById('reporte-success').style.display = 'flex';
+
+                        // Descargar el archivo después de 1 segundo
+                        setTimeout(() => {
+                            descargarReporte(data.filename);
+                            // Reactivar botón después de la descarga
+                            document.getElementById('generar-reporte-btn').disabled = false;
+                        }, 1000);
+                    } else if (data.status === 'error') {
+                        mostrarError(data.message || 'Error al generar el reporte');
+                    } else {
+                        // Seguir verificando
+                        verificarEstadoReporte(taskId, intentos + 1);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarError('Error al verificar el estado del reporte');
+                });
+        }, intervalo);
+    }
+
+    function descargarReporte(filename) {
+        // Crear un enlace temporal y descargarlo
+        const link = document.createElement('a');
+        link.href = `/admin/descargar-reporte/${filename}/`;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function mostrarError(mensaje) {
+        document.getElementById('reporte-processing').style.display = 'none';
+        document.getElementById('reporte-success').style.display = 'none';
+        document.getElementById('reporte-error').style.display = 'flex';
+        document.getElementById('error-message').textContent = mensaje;
+        document.getElementById('generar-reporte-btn').disabled = false;
+    }
+</script>
 {% endblock %}
