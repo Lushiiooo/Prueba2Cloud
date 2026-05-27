@@ -8,95 +8,71 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-@shared_task(
-    bind=True,
-    autoretry_for=(Exception,),
-    retry_kwargs={'max_retries': 3, 'countdown': 30},
-    name='app.tasks.enviar_correo_reserva',
-)
+@shared_task(bind=True)
 def enviar_correo_reserva(self, reserva_id):
-
-    import resend
-    from django.conf import settings
-    from django.template.loader import render_to_string
-    from django.utils.html import strip_tags
+    """
+    Simula el envío de un correo de confirmación de reserva.
+    En producción, aquí usarías un servicio de email real (SendGrid, AWS SES, etc.)
+    """
     from app.models import Reserva
-
+    
     try:
-        # Validar que la API key esté configurada
-        api_key = settings.RESEND_API_KEY
-        if not api_key:
-            logger.error(f"[RESEND ERROR] RESEND_API_KEY no está configurada")
-            return {
-                "status": "error",
-                "message": "RESEND_API_KEY no está configurada"
-            }
-
-        reserva = Reserva.objects.select_related(
-            'paciente__usuario',
-            'doctor'
-        ).get(id=reserva_id)
-
-        paciente = reserva.paciente
-        doctor = reserva.doctor
-        usuario = paciente.usuario
-
-        # Enviar siempre a este email (configurado por el administrador)
-        email_destino = 'servidor12minecraft21@gmail.com'
-
-        logger.info(f"[RESEND] Preparando correo para la reserva #{reserva.id}")
-        logger.info(f"[RESEND] Email destino: {email_destino}")
-        logger.info(f"[RESEND] From: {settings.RESEND_FROM_EMAIL}")
-
-        context = {
-            'nombre_paciente': usuario.get_full_name(),
-            'email_paciente': usuario.email,
-            'reserva_id': reserva.id,
-            'doctor_nombre': doctor.nombre,
-            'especialidad': doctor.get_especialidad_display(),
-            'fecha_hora': reserva.fecha_hora.strftime('%d/%m/%Y %H:%M'),
-            'razon_consulta': reserva.razon_consulta,
-            'estado': reserva.get_estado_display(),
+        reserva = Reserva.objects.get(id=reserva_id)
+        
+        # Simular envío de correo (en producción aquí usarías django.core.mail.send_mail)
+        mensaje = f"""
+        ╔════════════════════════════════════════════════════════════════╗
+        ║                   CONFIRMACIÓN DE RESERVA MÉDICA               ║
+        ╚════════════════════════════════════════════════════════════════╝
+        
+        Estimado/a {reserva.paciente.usuario.get_full_name()},
+        
+        Su reserva ha sido registrada correctamente en el sistema.
+        
+        📋 DETALLES DE LA RESERVA:
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        • ID de Reserva: #{reserva.id}
+        • Doctor: Dr. {reserva.doctor.nombre}
+        • Especialidad: {reserva.doctor.get_especialidad_display()}
+        • Fecha y Hora: {reserva.fecha_hora.strftime('%d/%m/%Y %H:%M')}
+        • Razón de la Consulta: {reserva.razon_consulta}
+        • Estado: {reserva.get_estado_display()}
+        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        
+        ⏰ RECORDATORIOS IMPORTANTES:
+        • Por favor, llegar 10 minutos antes de la cita
+        • Llevar su documento de identidad
+        • En caso de cambios, notificar con 24 horas de anticipación
+        
+        📞 ¿NECESITAS AYUDA?
+        Para cambios o cancelaciones, contacta al: +1-800-MEDICAL
+        O responde este correo directamente.
+        
+        ¡Esperamos brindarte la mejor atención!
+        
+        Medical Reserva Platform 🏥
+        """
+        
+        logger.info(f"[CELERY TASK] Tarea enviando correo para la reserva #{reserva.id}")
+        logger.info(f"[CORREO ENVIADO A] {reserva.paciente.usuario.email}")
+        print(mensaje)
+        
+        return {
+            'status': 'success',
+            'message': f'Correo enviado para la reserva #{reserva.id}',
+            'timestamp': timezone.now().isoformat()
         }
-
-        html_body = render_to_string(
-            'emails/confirmacion_reserva.html',
-            context
-        )
-
-        text_body = strip_tags(html_body)
-
-        resend.api_key = api_key
-
-        logger.info(f"[RESEND] Enviando correo con Resend API...")
-
-        response = resend.Emails.send({
-            "from": settings.RESEND_FROM_EMAIL,
-            "to": [email_destino],
-            "subject": f"Reserva #{reserva.id} confirmada - {usuario.get_full_name()}",
-            "html": html_body,
-            "text": text_body,
-        })
-
-        logger.info(f"[RESEND] Respuesta: {response}")
-
-        if response.get("id"):
-            logger.info(f"[RESEND] Correo enviado exitosamente. ID: {response.get('id')}")
-            return {
-                "status": "enviado",
-                "resend_id": response.get("id")
-            }
-        else:
-            error_msg = response.get("message", "Error desconocido")
-            logger.error(f"[RESEND ERROR] {error_msg}")
-            return {
-                "status": "error",
-                "message": error_msg
-            }
-
+    
+    except Reserva.DoesNotExist:
+        logger.error(f"[CELERY ERROR] Reserva #{reserva_id} no encontrada")
+        return {
+            'status': 'error',
+            'message': f'Reserva #{reserva_id} no encontrada'
+        }
+    
     except Exception as e:
-        logger.error(f"[RESEND ERROR] Excepción al enviar correo para reserva #{reserva_id}: {str(e)}", exc_info=True)
-        raise self.retry(exc=e, countdown=30, max_retries=3)
+        logger.error(f"[CELERY ERROR] Error al enviar correo para la reserva #{reserva_id}: {str(e)}")
+        self.retry(exc=e, countdown=60, max_retries=3)
 
 
 @shared_task

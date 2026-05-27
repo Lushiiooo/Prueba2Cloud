@@ -160,13 +160,6 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Mexico_City'
 
-# Resend Email Configuration
-RESEND_API_KEY = config('RESEND_API_KEY', default='')
-RESEND_FROM_EMAIL = config(
-    'RESEND_FROM_EMAIL',
-    default='Medical Reserva <confirmaciones@tudominio.com>'
-)
-
 # Logging
 LOGGING = {
     'version': 1,
