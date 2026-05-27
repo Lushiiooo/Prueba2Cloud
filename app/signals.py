@@ -4,14 +4,14 @@ Django signals for app.
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import Reserva
-from .tasks import enviar_correo_reserva
-
 
 @receiver(post_save, sender=Reserva)
-def reserva_creada(sender, instance, created, **kwargs):
+def reserva_post_save(sender, instance, created, **kwargs):
     """
-    Signal handler that triggers email task when a reservation is created.
+    Signal que se ejecuta después de guardar una reserva.
+    Aquí puedes agregar lógica adicional, como enviar notificaciones o actualizar estadísticas.
     """
     if created:
-        # Trigger Celery task asynchronously
-        enviar_correo_reserva.delay(instance.id)
+        print(f"Reserva creada: {instance}")
+    else:
+        print(f"Reserva actualizada: {instance}")
