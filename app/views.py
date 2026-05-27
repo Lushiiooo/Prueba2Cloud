@@ -445,49 +445,31 @@ def generar_reporte(request):
 
 @login_required
 def verificar_reporte(request, task_id):
-    """
-    Verifica el estado de la tarea de Celery.
-    Retorna JSON con el estado actual.
-    """
     if not request.user.is_staff and not request.user.is_superuser:
         return JsonResponse({'status': 'error', 'message': 'No tienes permisos'}, status=403)
     
     from celery.result import AsyncResult
     
-    try:
-        task_result = AsyncResult(task_id)
-        
-        if task_result.state == 'PENDING':
-            response = {
-                'status': 'processing',
-                'message': 'La tarea está en cola...'
-            }
-        elif task_result.state == 'SUCCESS':
-            result = task_result.result
-            response = {
-                'status': 'success',
-                'message': result.get('message', 'Reporte generado exitosamente'),
-                'filename': result.get('filename'),
-                'task_id': task_id
-            }
-        elif task_result.state == 'FAILURE':
-            response = {
-                'status': 'error',
-                'message': 'Error al generar el reporte',
-                'error': str(task_result.info)
-            }
-        else:
-            response = {
-                'status': 'processing',
-                'message': f'Estado: {task_result.state}'
-            }
-        
-        return JsonResponse(response)
-    except Exception as e:
-        return JsonResponse({
+    task_result = AsyncResult(task_id)
+    
+    # Mapeo de estados de Celery a tus estados de frontend
+    if task_result.state in ['PENDING', 'STARTED', 'RECEIVED']:
+        response = {'status': 'processing', 'message': 'Generando reporte...'}
+    elif task_result.state == 'SUCCESS':
+        result = task_result.result
+        response = {
+            'status': 'success',
+            'message': result.get('message', 'Reporte generado'),
+            'filename': result.get('filename')
+        }
+    else: # FAILURE, REVOKED, etc.
+        response = {
             'status': 'error',
-            'message': str(e)
-        }, status=500)
+            'message': f'Error: {task_result.state}',
+            'error': str(task_result.info)
+        }
+    
+    return JsonResponse(response)
 
 
 @login_required
