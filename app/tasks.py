@@ -8,73 +8,6 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-@shared_task(bind=True)
-def enviar_correo_reserva(self, reserva_id):
-    """
-    Simula el envío de un correo de confirmación de reserva.
-    En producción, aquí usarías un servicio de email real (SendGrid, AWS SES, etc.)
-    """
-    from app.models import Reserva
-    
-    try:
-        reserva = Reserva.objects.get(id=reserva_id)
-        
-        # Simular envío de correo (en producción aquí usarías django.core.mail.send_mail)
-        mensaje = f"""
-        ╔════════════════════════════════════════════════════════════════╗
-        ║                   CONFIRMACIÓN DE RESERVA MÉDICA               ║
-        ╚════════════════════════════════════════════════════════════════╝
-        
-        Estimado/a {reserva.paciente.usuario.get_full_name()},
-        
-        Su reserva ha sido registrada correctamente en el sistema.
-        
-        📋 DETALLES DE LA RESERVA:
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        • ID de Reserva: #{reserva.id}
-        • Doctor: Dr. {reserva.doctor.nombre}
-        • Especialidad: {reserva.doctor.get_especialidad_display()}
-        • Fecha y Hora: {reserva.fecha_hora.strftime('%d/%m/%Y %H:%M')}
-        • Razón de la Consulta: {reserva.razon_consulta}
-        • Estado: {reserva.get_estado_display()}
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        
-        ⏰ RECORDATORIOS IMPORTANTES:
-        • Por favor, llegar 10 minutos antes de la cita
-        • Llevar su documento de identidad
-        • En caso de cambios, notificar con 24 horas de anticipación
-        
-        📞 ¿NECESITAS AYUDA?
-        Para cambios o cancelaciones, contacta al: +1-800-MEDICAL
-        O responde este correo directamente.
-        
-        ¡Esperamos brindarte la mejor atención!
-        
-        Medical Reserva Platform 🏥
-        """
-        
-        logger.info(f"[CELERY TASK] Tarea enviando correo para la reserva #{reserva.id}")
-        logger.info(f"[CORREO ENVIADO A] {reserva.paciente.usuario.email}")
-        print(mensaje)
-        
-        return {
-            'status': 'success',
-            'message': f'Correo enviado para la reserva #{reserva.id}',
-            'timestamp': timezone.now().isoformat()
-        }
-    
-    except Reserva.DoesNotExist:
-        logger.error(f"[CELERY ERROR] Reserva #{reserva_id} no encontrada")
-        return {
-            'status': 'error',
-            'message': f'Reserva #{reserva_id} no encontrada'
-        }
-    
-    except Exception as e:
-        logger.error(f"[CELERY ERROR] Error al enviar correo para la reserva #{reserva_id}: {str(e)}")
-        self.retry(exc=e, countdown=60, max_retries=3)
-
-
 @shared_task
 def recordatorio_reserva_proxima():
     """
@@ -126,3 +59,70 @@ def limpiar_reservas_antiguas():
         'status': 'success',
         'reservas_completadas': count
     }
+
+
+@shared_task
+def backup_multicloud_task():
+    """
+    Tarea programada para ejecutar el script de backup a MultiCloud (Azure).
+    Se ejecuta diariamente a la medianoche (00:00).
+    """
+    import subprocess
+    from datetime import datetime
+    
+    try:
+        script_path = "/app/backup_multicloud.sh"
+        
+        # Ejecutar el script bash
+        result = subprocess.run(
+            ['/bin/bash', script_path],
+            capture_output=True,
+            text=True,
+            timeout=3600  # Timeout de 1 hora
+        )
+        
+        # Capturar salida y errores
+        stdout = result.stdout
+        stderr = result.stderr
+        returncode = result.returncode
+        
+        # Logging de la ejecución
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        if returncode == 0:
+            logger.info(
+                f"[BACKUP_MULTICLOUD] ✓ Ejecutado exitosamente a {timestamp}\n"
+                f"STDOUT:\n{stdout}"
+            )
+            return {
+                'status': 'success',
+                'timestamp': timestamp,
+                'returncode': returncode,
+                'message': 'Backup a MultiCloud ejecutado correctamente'
+            }
+        else:
+            logger.error(
+                f"[BACKUP_MULTICLOUD] ✗ Error en ejecución a {timestamp}\n"
+                f"STDOUT:\n{stdout}\n"
+                f"STDERR:\n{stderr}"
+            )
+            return {
+                'status': 'error',
+                'timestamp': timestamp,
+                'returncode': returncode,
+                'message': 'Error durante el backup',
+                'error': stderr
+            }
+            
+    except subprocess.TimeoutExpired:
+        logger.error("[BACKUP_MULTICLOUD] ✗ Timeout: El script tardó más de 1 hora")
+        return {
+            'status': 'error',
+            'message': 'Timeout: El backup tardó demasiado tiempo'
+        }
+    except Exception as e:
+        logger.error(f"[BACKUP_MULTICLOUD] ✗ Excepción: {str(e)}")
+        return {
+            'status': 'error',
+            'message': f'Excepción durante el backup: {str(e)}'
+        }

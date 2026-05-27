@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'django_celery_beat',
+    'django_celery_results',
     'app',
 ]
 
@@ -96,7 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 LANGUAGE_CODE = 'es-es'
 
-TIME_ZONE = 'America/Mexico_City'
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 
@@ -158,7 +160,7 @@ CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'America/Mexico_City'
+CELERY_TIMEZONE = 'America/Santiago'
 
 # Logging
 LOGGING = {
