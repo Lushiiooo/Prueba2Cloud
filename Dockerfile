@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Instala dependencias del sistema para PostgreSQL y Pillow
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libjpeg-dev \
