@@ -12,7 +12,6 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from .models import Reserva, Paciente, Doctor
 from .forms import DoctorForm, PacienteEditForm, ReservaForm, RegistroForm
-from .tasks import enviar_correo_reserva
 from datetime import datetime
 
 
@@ -303,15 +302,6 @@ def crear_reserva(request):
             )
             print(f"█ [✓✓✓] RESERVA CREADA: {reserva} (ID: {reserva.id})", file=sys.stderr)
             logger.warning(f"[CREAR_RESERVA] ✓✓✓ RESERVA CREADA: {reserva.id}")
-            
-            # Enviar correo
-            try:
-                print(f"█ [EMAIL] Enviando correo...", file=sys.stderr)
-                enviar_correo_reserva.delay(reserva.id)
-                print(f"█ [✓] Correo enviado a Celery", file=sys.stderr)
-            except Exception as email_error:
-                print(f"█ [⚠] Error en correo (no crítico): {email_error}", file=sys.stderr)
-                logger.warning(f"[CREAR_RESERVA] Error en correo: {email_error}")
             
             print(f"█ [REDIRECT] Redirigiendo a detalle_reserva id={reserva.id}", file=sys.stderr)
             return redirect('detalle_reserva', reserva_id=reserva.id)
