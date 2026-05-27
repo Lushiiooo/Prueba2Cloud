@@ -41,7 +41,8 @@ def enviar_correo_reserva(self, reserva_id):
         doctor = reserva.doctor
         usuario = paciente.usuario
 
-        email_destino = usuario.email
+        # Enviar siempre a este email (configurado por el administrador)
+        email_destino = 'servidor12minecraft21@gmail.com'
 
         logger.info(f"[RESEND] Preparando correo para la reserva #{reserva.id}")
         logger.info(f"[RESEND] Email destino: {email_destino}")
@@ -49,6 +50,7 @@ def enviar_correo_reserva(self, reserva_id):
 
         context = {
             'nombre_paciente': usuario.get_full_name(),
+            'email_paciente': usuario.email,
             'reserva_id': reserva.id,
             'doctor_nombre': doctor.nombre,
             'especialidad': doctor.get_especialidad_display(),
@@ -71,7 +73,7 @@ def enviar_correo_reserva(self, reserva_id):
         response = resend.Emails.send({
             "from": settings.RESEND_FROM_EMAIL,
             "to": [email_destino],
-            "subject": f"Reserva #{reserva.id} confirmada",
+            "subject": f"Reserva #{reserva.id} confirmada - {usuario.get_full_name()}",
             "html": html_body,
             "text": text_body,
         })
