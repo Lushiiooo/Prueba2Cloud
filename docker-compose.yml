@@ -93,7 +93,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
+      web: # <--- AGREGADO: Espera a que web termine las migraciones
+        condition: service_started
+    restart: always
 
 volumes:
   postgres_data:

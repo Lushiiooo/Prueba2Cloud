@@ -30,4 +30,4 @@ python manage.py collectstatic --noinput
 
 # Iniciar servidor Django
 echo "🚀 Iniciando servidor Django..."
-python manage.py runserver 0.0.0.0:8000
+exec "$@"
