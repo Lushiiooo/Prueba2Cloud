@@ -18,7 +18,7 @@ jobs:
         script: |
           # 1. Navega a la carpeta de tu proyecto en la instancia EC2
           # Reemplaza "PRUEBA2_CLOUD" si la carpeta en tu servidor se llama distinto
-          cd ~/PRUEBA2_CLOUD
+          cd ~/Prueba2Cloud
           
           # 2. Trae los últimos cambios limpios de GitHub
           git fetch --all
