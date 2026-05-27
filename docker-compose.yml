@@ -74,28 +74,5 @@ services:
       web:
         condition: service_started
 
-  celery_beat:
-    build: .
-    container_name: medical_celery_beat
-    command: celery -A medicalreserva beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - .:/app
-    environment:
-      DEBUG: "${DEBUG}"
-      DB_NAME: "${DB_NAME}"
-      DB_USER: "${DB_USER}"
-      DB_PASSWORD: "${DB_PASSWORD}"
-      DB_HOST: "db"
-      REDIS_URL: "redis://redis:6379/0"
-      SECRET_KEY: "${SECRET_KEY}"
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      web: # <--- AGREGADO: Espera a que web termine las migraciones
-        condition: service_started
-    restart: always
-
 volumes:
   postgres_data:

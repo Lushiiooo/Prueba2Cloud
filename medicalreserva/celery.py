@@ -21,11 +21,6 @@ app.autodiscover_tasks()
 # CELERY BEAT SCHEDULE - Tareas programadas
 # ============================================================================
 app.conf.beat_schedule = {
-    'backup-multicloud-diario': {
-        'task': 'app.tasks.backup_multicloud_task',
-        'schedule': crontab(minute='*/1'),   # cada 1 minuto para pruebas (cambiar a diario en producción)
-        'options': {'queue': 'default', 'expires': 300}
-    },
     'recordatorio-reserva-proxima': {
         'task': 'app.tasks.recordatorio_reserva_proxima',
         'schedule': crontab(hour='*/6'),  # Cada 6 horas
