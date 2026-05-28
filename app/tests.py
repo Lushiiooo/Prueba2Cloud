@@ -34,3 +34,5 @@ class ArchitectureSmokeTest(SimpleTestCase):
             
         self.assertTrue(modulo_cargado, "El código tiene errores de sintaxis o importación.")
 
+
+error fatal
