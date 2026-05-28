@@ -33,3 +33,7 @@ class ArchitectureSmokeTest(SimpleTestCase):
             print(f"Error de compilación en despliegue: {e}")
             
         self.assertTrue(modulo_cargado, "El código tiene errores de sintaxis o importación.")
+
+
+
+  error_provocado_en_vivo
