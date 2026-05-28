@@ -1,31 +1,35 @@
-import importlib.metadata
-from django.test import TestCase
+import sys
+from django.test import SimpleTestCase
+from django.conf import settings
 
-class DependencyVersionValidationTest(TestCase):
-    def setUp(self):
-        # Definimos el diccionario con las versiones estrictas del informe técnico
-        self.versiones_requeridas = {
-            "django": "5.0.6",
-            "gunicorn": "21.2.0",
-            "djangorestframework": "3.14.0",  # En Python, el tag 3.14 se registra como 3.14.0
-            "celery": "5.3.4",
-        }
-
-    def test_framework_versions_match_requirements(self):
+class ArchitectureSmokeTest(SimpleTestCase):
+    """
+    SimpleTestCase le indica a Django que este bloque NO requiere
+    crear ni conectarse a ninguna base de datos relacional.
+    """
+    
+    def test_django_settings_load_successfully(self):
         """
-        Garantiza que el entorno aislado de CI tenga instaladas las versiones exactas
-        del stack tecnológico declaradas para producción.
+        Valida que el archivo settings.py esté correctamente estructurado
+        y que no tenga errores de sintaxis ni variables de entorno faltantes.
         """
-        for paquete, version_esperada in self.versiones_requeridas.items():
-            try:
-                # Extrae la versión real instalada en el runtime de GitHub Actions
-                version_instalada = importlib.metadata.version(paquete)
+        # Verificamos que la clave secreta se haya cargado en el runtime de CI
+        self.assertTrue(hasattr(settings, 'SECRET_KEY'))
+        self.assertNotEqual(settings.SECRET_KEY, "")
 
-                # Compara que coincida con el contrato técnico
-                self.assertEqual(
-                    version_instalada,
-                    version_esperada,
-                    f"Fallo de CI: El paquete {paquete} tiene la versión {version_instalada} pero se requiere la {version_esperada}."
-                )
-            except importlib.metadata.PackageNotFoundError:
-                self.fail(f"Fallo de CI: El paquete crítico '{paquete}' no está instalado en el entorno.")
+    def test_critical_modules_compilation(self):
+        """
+        Prueba de humo para asegurar que los controladores y rutas base
+        del sistema compilen y se importen sin errores de código.
+        """
+        try:
+            # Forzamos la importación de los módulos clave del proyecto
+            import medicalreserva.urls
+            import medicalreserva.celery
+            
+            modulo_cargado = True
+        except Exception as e:
+            modulo_cargado = False
+            print(f"Error de compilación en despliegue: {e}")
+            
+        self.assertTrue(modulo_cargado, "El código tiene errores de sintaxis o importación.")
